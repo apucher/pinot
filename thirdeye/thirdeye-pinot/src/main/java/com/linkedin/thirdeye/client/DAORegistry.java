@@ -1,6 +1,7 @@
 package com.linkedin.thirdeye.client;
 
 import com.linkedin.thirdeye.datalayer.bao.AlertConfigManager;
+import com.linkedin.thirdeye.datalayer.bao.AnomalyFunctionExManager;
 import com.linkedin.thirdeye.datalayer.bao.AnomalyFunctionManager;
 import com.linkedin.thirdeye.datalayer.bao.DashboardConfigManager;
 import com.linkedin.thirdeye.datalayer.bao.DataCompletenessConfigManager;
@@ -17,6 +18,7 @@ import com.linkedin.thirdeye.datalayer.bao.OverrideConfigManager;
 import com.linkedin.thirdeye.datalayer.bao.RawAnomalyResultManager;
 import com.linkedin.thirdeye.datalayer.bao.TaskManager;
 import com.linkedin.thirdeye.datalayer.bao.jdbc.AlertConfigManagerImpl;
+import com.linkedin.thirdeye.datalayer.bao.jdbc.AnomalyFunctionExManagerImpl;
 import com.linkedin.thirdeye.datalayer.bao.jdbc.AnomalyFunctionManagerImpl;
 import com.linkedin.thirdeye.datalayer.bao.jdbc.DashboardConfigManagerImpl;
 import com.linkedin.thirdeye.datalayer.bao.jdbc.DataCompletenessConfigManagerImpl;
@@ -48,19 +50,6 @@ public class DAORegistry {
   public static DAORegistry getInstance() {
     return INSTANCE;
   }
-
-  /**
-   * **USE FOR TESTING ONLY**
-   * Return a DAO registry for testing purpose, which may be performed in arbitrary order and
-   * hence need independent registry for each test.
-   *
-   * @return an independent DAO registry to the global singleton registry.
-   */
-  public static DAORegistry getTestInstance() {
-    return new DAORegistry();
-  }
-
-
 
   /**
    * internal constructor.
@@ -141,4 +130,7 @@ public class DAORegistry {
     return DaoProviderUtil.getInstance(DetectionStatusManagerImpl.class);
   }
 
+  public AnomalyFunctionExManager getAnomalyFunctionExDAO() {
+    return DaoProviderUtil.getInstance(AnomalyFunctionExManagerImpl.class);
+  }
 }

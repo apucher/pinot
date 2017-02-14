@@ -11,6 +11,7 @@ import com.linkedin.thirdeye.constant.MetricAggFunction;
 import com.linkedin.thirdeye.datalayer.ScriptRunner;
 import com.linkedin.thirdeye.datalayer.dto.AlertConfigDTO;
 import com.linkedin.thirdeye.datalayer.dto.AnomalyFunctionDTO;
+import com.linkedin.thirdeye.datalayer.dto.AnomalyFunctionExDTO;
 import com.linkedin.thirdeye.datalayer.dto.DataCompletenessConfigDTO;
 import com.linkedin.thirdeye.datalayer.dto.DatasetConfigDTO;
 import com.linkedin.thirdeye.datalayer.dto.DetectionStatusDTO;
@@ -32,6 +33,7 @@ import java.io.FileReader;
 import java.net.URL;
 import java.sql.Connection;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,6 +59,7 @@ public abstract class AbstractManagerTestBase {
   protected DataCompletenessConfigManager dataCompletenessConfigDAO;
   protected EventManager eventManager;
   protected DetectionStatusManager detectionStatusDAO;
+  protected AnomalyFunctionExManager anomalyFunctionExDAO;
 
   //  protected TestDBResources testDBResources;
   protected DAORegistry daoRegistry;
@@ -90,6 +93,7 @@ public abstract class AbstractManagerTestBase {
       eventManager = daoRegistry.getEventDAO();
       anomalyFunctionDAO = daoRegistry.getAnomalyFunctionDAO();
       detectionStatusDAO = daoRegistry.getDetectionStatusDAO();
+      anomalyFunctionExDAO = daoRegistry.getAnomalyFunctionExDAO();
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -316,5 +320,15 @@ public abstract class AbstractManagerTestBase {
     detectionStatusDTO.setDateToCheckInSDF(dateToCheckInSDF);
     detectionStatusDTO.setDetectionRun(detectionRun);
     return detectionStatusDTO;
+  }
+
+  protected AnomalyFunctionExDTO getTestFunctionExSpec(String name, String className) {
+    AnomalyFunctionExDTO spec = new AnomalyFunctionExDTO();
+    spec.setName(name);
+    spec.setClassName(className);
+    spec.setActive(true);
+    spec.setCron("0/10 * * * * ?");
+    spec.setConfig(Collections.EMPTY_MAP);
+    return spec;
   }
 }
