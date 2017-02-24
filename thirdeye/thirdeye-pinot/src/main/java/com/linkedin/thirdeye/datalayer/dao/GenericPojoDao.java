@@ -150,7 +150,8 @@ public class GenericPojoDao {
    * @throws SQLException
    */
   public Connection getConnection() throws SQLException {
-    BaseThirdEyeApplication.dbCallCounter.inc();
+    // TODO remove static dependency, breaks logging when used without instantiating BaseThirdEyeApplication first
+    //BaseThirdEyeApplication.dbCallCounter.inc();
     // ensure to close the connection
     return dataSource.getConnection();
   }
