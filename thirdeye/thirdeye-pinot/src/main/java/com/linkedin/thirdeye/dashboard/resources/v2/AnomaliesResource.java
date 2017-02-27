@@ -5,7 +5,10 @@ import com.linkedin.thirdeye.dashboard.resources.v2.pojo.AnomaliesSummary;
 import com.linkedin.thirdeye.dashboard.resources.v2.pojo.AnomaliesWrapper;
 import com.linkedin.thirdeye.dashboard.resources.v2.pojo.AnomalyDetails;
 
+import com.linkedin.thirdeye.datalayer.bao.AnomalyFunctionExManager;
+import com.linkedin.thirdeye.datalayer.dto.AnomalyFunctionExDTO;
 import com.linkedin.thirdeye.detector.email.filter.AlertFilterFactory;
+import com.linkedin.thirdeye.detector.function.AnomalyFunction;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -88,6 +91,7 @@ public class AnomaliesResource {
   private final MetricConfigManager metricConfigDAO;
   private final MergedAnomalyResultManager mergedAnomalyResultDAO;
   private final AnomalyFunctionManager anomalyFunctionDAO;
+  private final AnomalyFunctionExManager anomalyFunctionExDAO;
   private final DashboardConfigManager dashboardConfigDAO;
   private ExecutorService threadPool;
   private AlertFilterFactory alertFilterFactory;
@@ -96,6 +100,7 @@ public class AnomaliesResource {
     metricConfigDAO = DAO_REGISTRY.getMetricConfigDAO();
     mergedAnomalyResultDAO = DAO_REGISTRY.getMergedAnomalyResultDAO();
     anomalyFunctionDAO = DAO_REGISTRY.getAnomalyFunctionDAO();
+    anomalyFunctionExDAO = DAO_REGISTRY.getAnomalyFunctionExDAO();
     dashboardConfigDAO = DAO_REGISTRY.getDashboardConfigDAO();
     threadPool = Executors.newFixedThreadPool(10);
     this.alertFilterFactory = alertFilterFactory;
@@ -558,7 +563,13 @@ public class AnomaliesResource {
     String dataset = datasetConfig.getDataset();
     String metricName = mergedAnomaly.getMetric();
 
-    AnomalyFunctionDTO anomalyFunction = anomalyFunctionDAO.findById(mergedAnomaly.getFunctionId());
+    AnomalyFunctionDTO anomalyFunction = null;
+    if(mergedAnomaly.getFunctionId() >= 0)
+      anomalyFunction = anomalyFunctionDAO.findById(mergedAnomaly.getFunctionId());
+
+    AnomalyFunctionExDTO anomalyFunctionEx = null;
+    if(mergedAnomaly.getFunctionId() < 0)
+      anomalyFunctionEx = anomalyFunctionExDAO.findById(-mergedAnomaly.getFunctionId());
 
     String aggGranularity = constructAggGranularity(datasetConfig);
 
@@ -569,16 +580,19 @@ public class AnomaliesResource {
     long currentEndTime = range.getEnd();
     long baselineStartTime = new DateTime(currentStartTime).minusDays(7).getMillis();
     long baselineEndTime = new DateTime(currentEndTime).minusDays(7).getMillis();
+    Multimap<String, String> filterSet = null;
+    if(anomalyFunction != null)
+      anomalyFunction.getFilterSet();
 
     AnomalyDetails anomalyDetails = null;
     try {
-    JSONObject currentTimeseriesResponse = getTimeSeriesData(dataset, anomalyFunction.getFilterSet(),
+    JSONObject currentTimeseriesResponse = getTimeSeriesData(dataset, filterSet,
         currentStartTime, currentEndTime, aggGranularity, metricName);
-    JSONObject baselineTimeseriesResponse = getTimeSeriesData(dataset, anomalyFunction.getFilterSet(),
+    JSONObject baselineTimeseriesResponse = getTimeSeriesData(dataset, filterSet,
           baselineStartTime, baselineEndTime, aggGranularity, metricName);
 
     anomalyDetails = constructAnomalyDetails(metricName, dataset, datasetConfig,
-        mergedAnomaly, anomalyFunction,
+        mergedAnomaly, anomalyFunction, anomalyFunctionEx,
         currentStartTime, currentEndTime, baselineStartTime, baselineEndTime,
         currentTimeseriesResponse, baselineTimeseriesResponse,
         timeSeriesDateFormatter, startEndDateFormatterHours, startEndDateFormatterDays);
@@ -608,7 +622,7 @@ public class AnomaliesResource {
    * @throws JSONException
    */
   private AnomalyDetails constructAnomalyDetails(String metricName, String dataset, DatasetConfigDTO datasetConfig,
-      MergedAnomalyResultDTO mergedAnomaly, AnomalyFunctionDTO anomalyFunction,
+      MergedAnomalyResultDTO mergedAnomaly, AnomalyFunctionDTO anomalyFunction, AnomalyFunctionExDTO anomalyFunctionEx,
       long currentStartTime, long currentEndTime, long baselineStartTime, long baselineEndTime,
       JSONObject currentTimeseriesResponse, JSONObject baselineTimeseriesResponse,
       DateTimeFormatter timeSeriesDateFormatter, DateTimeFormatter startEndDateFormatterHours, DateTimeFormatter startEndDateFormatterDays) throws JSONException {
@@ -629,24 +643,43 @@ public class AnomaliesResource {
     List<String> currentValues = getDataFromTimeSeriesObject(currentTimeseriesResponse, metricName);
     anomalyDetails.setCurrentValues(currentValues);
 
-    // from function and anomaly
+    // from anomaly
     anomalyDetails.setAnomalyId(mergedAnomaly.getId());
     anomalyDetails.setAnomalyRegionStart(timeSeriesDateFormatter.print(Long.valueOf(mergedAnomaly.getStartTime())));
     anomalyDetails.setAnomalyRegionEnd(timeSeriesDateFormatter.print(Long.valueOf(mergedAnomaly.getEndTime())));
     Map<String, String> messageDataMap = getAnomalyMessageDataMap(mergedAnomaly.getMessage());
     anomalyDetails.setCurrent(messageDataMap.get(ANOMALY_CURRENT_VAL_KEY));
     anomalyDetails.setBaseline(messageDataMap.get(ANOMALY_BASELINE_VAL_KEY));
-    anomalyDetails.setAnomalyFunctionId(anomalyFunction.getId());
-    anomalyDetails.setAnomalyFunctionName(anomalyFunction.getFunctionName());
-    anomalyDetails.setAnomalyFunctionType(anomalyFunction.getType());
-    anomalyDetails.setAnomalyFunctionProps(anomalyFunction.getProperties());
     anomalyDetails.setAnomalyFunctionDimension(mergedAnomaly.getDimensions().toString());
     if (mergedAnomaly.getFeedback() != null) {
       anomalyDetails.setAnomalyFeedback(AnomalyDetails.getFeedbackStringFromFeedbackType(mergedAnomaly.getFeedback().getFeedbackType()));
     }
+
+    // from function
+    if(anomalyFunction != null)
+      populateFromAnomalyFunction(anomalyDetails, anomalyFunction);
+
+    if(anomalyFunctionEx != null)
+      populateFromAnomalyFunctionEx(anomalyDetails, anomalyFunctionEx);
+
     return anomalyDetails;
   }
 
+  private static AnomalyDetails populateFromAnomalyFunction(AnomalyDetails d, AnomalyFunctionDTO dto) {
+    d.setAnomalyFunctionId(dto.getId());
+    d.setAnomalyFunctionName(dto.getFunctionName());
+    d.setAnomalyFunctionType(dto.getType());
+    d.setAnomalyFunctionProps(dto.getProperties());
+    return d;
+  }
+
+  private static AnomalyDetails populateFromAnomalyFunctionEx(AnomalyDetails d, AnomalyFunctionExDTO dto) {
+    d.setAnomalyFunctionId(-dto.getId());
+    d.setAnomalyFunctionName(dto.getName());
+    d.setAnomalyFunctionType("AnomalyFunctionEx");
+    d.setAnomalyFunctionProps("");
+    return d;
+  }
 
   private TimeRange getTimeseriesOffsetedTimes(long anomalyStartTime, long anomalyEndTime, DatasetConfigDTO datasetConfig) {
     TimeUnit dataTimeunit = datasetConfig.getTimeUnit();
