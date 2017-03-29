@@ -6,12 +6,18 @@ import com.linkedin.thirdeye.datalayer.entity.ClassificationConfigIndex;
 import com.linkedin.thirdeye.datalayer.entity.EventIndex;
 import com.linkedin.thirdeye.datalayer.entity.AutotuneConfigIndex;
 import com.linkedin.thirdeye.datalayer.entity.OverrideConfigIndex;
+import com.linkedin.thirdeye.datalayer.entity.RootCauseEntityIndex;
+import com.linkedin.thirdeye.datalayer.entity.RootCauseRelationIndex;
+import com.linkedin.thirdeye.datalayer.entity.RootCauseSessionIndex;
 import com.linkedin.thirdeye.datalayer.pojo.AlertConfigBean;
 import com.linkedin.thirdeye.datalayer.pojo.ClassificationConfigBean;
 import com.linkedin.thirdeye.datalayer.pojo.EventBean;
 import com.linkedin.thirdeye.datalayer.pojo.AutotuneConfigBean;
 import com.linkedin.thirdeye.datalayer.pojo.OverrideConfigBean;
 
+import com.linkedin.thirdeye.datalayer.pojo.RootCauseEntityBean;
+import com.linkedin.thirdeye.datalayer.pojo.RootCauseRelationBean;
+import com.linkedin.thirdeye.datalayer.pojo.RootCauseSessionBean;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -121,6 +127,12 @@ public class GenericPojoDao {
         newPojoInfo(DEFAULT_BASE_TABLE_NAME, AutotuneConfigIndex.class));
     pojoInfoMap.put(ClassificationConfigBean.class,
         newPojoInfo(DEFAULT_BASE_TABLE_NAME, ClassificationConfigIndex.class));
+    pojoInfoMap.put(RootCauseEntityBean.class,
+        newPojoInfo(DEFAULT_BASE_TABLE_NAME, RootCauseEntityIndex.class));
+    pojoInfoMap.put(RootCauseRelationBean.class,
+        newPojoInfo(DEFAULT_BASE_TABLE_NAME, RootCauseRelationIndex.class));
+    pojoInfoMap.put(RootCauseSessionBean.class,
+        newPojoInfo(DEFAULT_BASE_TABLE_NAME, RootCauseSessionIndex.class));
   }
 
   private static PojoInfo newPojoInfo(String baseTableName,

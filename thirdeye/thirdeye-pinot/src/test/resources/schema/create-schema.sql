@@ -307,3 +307,36 @@ create table if not exists classification_config_index (
 ALTER TABLE `classification_config_index` ADD UNIQUE `classification_config_unique_index`(`name`);
 create index classification_config_name_index on classification_config_index(name);
 create index classification_config_function_index on classification_config_index(main_function_id);
+
+create table if not exists root_cause_entity_index (
+    name varchar(200) not null,
+    type VARCHAR (100),
+    base_id bigint(20) not null,
+    create_time timestamp,
+    update_time timestamp default current_timestamp,
+    version int(10)
+) ENGINE=InnoDB;
+ALTER TABLE `root_cause_entity_index` ADD UNIQUE `root_cause_entity_unique_index`(`name`);
+create index root_cause_entity_name_index on root_cause_entity_index(name);
+create index root_cause_entity_type_index on root_cause_entity_index(type);
+
+create table if not exists root_cause_relation_index (
+    type VARCHAR (100),
+    from_id bigint(20) not null,
+    to_id bigint(20) not null,
+    base_id bigint(20) not null,
+    create_time timestamp,
+    update_time timestamp default current_timestamp,
+    version int(10)
+) ENGINE=InnoDB;
+create index root_cause_relation_type_index on root_cause_relation_index(type);
+create index root_cause_relation_from_id_index on root_cause_relation_index(from_id);
+create index root_cause_relation_to_id_index on root_cause_relation_index(to_id);
+
+create table if not exists root_cause_session_index (
+    base_id bigint(20) not null,
+    create_time timestamp,
+    update_time timestamp default current_timestamp,
+    version int(10)
+) ENGINE=InnoDB;
+

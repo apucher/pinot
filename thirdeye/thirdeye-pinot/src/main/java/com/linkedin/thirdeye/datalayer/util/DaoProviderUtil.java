@@ -1,11 +1,15 @@
 package com.linkedin.thirdeye.datalayer.util;
 
+import com.linkedin.thirdeye.datalayer.bao.RootCauseEntityManager;
 import com.linkedin.thirdeye.datalayer.entity.AlertConfigIndex;
 import com.linkedin.thirdeye.datalayer.entity.ClassificationConfigIndex;
 import com.linkedin.thirdeye.datalayer.entity.EventIndex;
 import com.linkedin.thirdeye.datalayer.entity.AutotuneConfigIndex;
 import com.linkedin.thirdeye.datalayer.entity.OverrideConfigIndex;
 
+import com.linkedin.thirdeye.datalayer.entity.RootCauseEntityIndex;
+import com.linkedin.thirdeye.datalayer.entity.RootCauseRelationIndex;
+import com.linkedin.thirdeye.datalayer.entity.RootCauseSessionIndex;
 import io.dropwizard.configuration.ConfigurationFactory;
 import io.dropwizard.jackson.Jackson;
 
@@ -140,6 +144,12 @@ public abstract class DaoProviderUtil {
             convertCamelCaseToUnderscore(AutotuneConfigIndex.class.getSimpleName()));
         entityMappingHolder.register(conn, ClassificationConfigIndex.class,
             convertCamelCaseToUnderscore(ClassificationConfigIndex.class.getSimpleName()));
+        entityMappingHolder.register(conn, RootCauseEntityIndex.class,
+            convertCamelCaseToUnderscore(RootCauseEntityIndex.class.getSimpleName()));
+        entityMappingHolder.register(conn, RootCauseRelationIndex.class,
+            convertCamelCaseToUnderscore(RootCauseRelationIndex.class.getSimpleName()));
+        entityMappingHolder.register(conn, RootCauseSessionIndex.class,
+            convertCamelCaseToUnderscore(RootCauseSessionIndex.class.getSimpleName()));
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
