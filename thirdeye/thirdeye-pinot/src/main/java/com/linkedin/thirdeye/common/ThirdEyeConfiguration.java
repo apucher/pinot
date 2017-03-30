@@ -29,6 +29,8 @@ public abstract class ThirdEyeConfiguration extends Configuration {
 
   private String phantomJsPath = "";
 
+  private boolean skipPeriodicCacheRefresh;
+
   public String getRootDir() {
     return rootDir;
   }
@@ -115,4 +117,11 @@ public abstract class ThirdEyeConfiguration extends Configuration {
     this.phantomJsPath = phantomJsPath;
   }
 
+  public boolean isSkipPeriodicCacheRefresh() {
+    return skipPeriodicCacheRefresh;
+  }
+
+  public void setSkipPeriodicCacheRefresh(boolean skipPeriodicCacheRefresh) {
+    this.skipPeriodicCacheRefresh = skipPeriodicCacheRefresh;
+  }
 }

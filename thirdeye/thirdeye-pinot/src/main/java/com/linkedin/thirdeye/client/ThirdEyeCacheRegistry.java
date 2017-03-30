@@ -106,7 +106,11 @@ public class ThirdEyeCacheRegistry {
 
     initCaches(config);
 
-    initPeriodicCacheRefresh();
+    initInitialCacheRefresh();
+
+    if(!config.isSkipPeriodicCacheRefresh()) {
+      initPeriodicCacheRefresh();
+    }
   }
 
   private static void initCaches(ThirdEyeConfiguration config) {
@@ -182,18 +186,20 @@ public class ThirdEyeCacheRegistry {
     cacheRegistry.registerDashboardConfigsCache(dashboardConfigsCache);
   }
 
+  private static void initInitialCacheRefresh() {
+    final CacheResource cacheResource = new CacheResource();
+    cacheResource.refreshCollections();
+    cacheResource.refreshDatasetConfigCache();
+  }
+
   private static void initPeriodicCacheRefresh() {
 
     final CacheResource cacheResource = new CacheResource();
     // manually refreshing on startup, and setting delay
     // as weeklyService starts before hourlyService finishes,
     // causing NPE in reading collectionsCache
-
-    // Start initial cache loading asynchronously to reduce application start time
     Executors.newSingleThreadExecutor().submit(new Runnable() {
       @Override public void run() {
-        cacheResource.refreshCollections();
-        cacheResource.refreshDatasetConfigCache();
         cacheResource.refreshDashoardConfigsCache();
         cacheResource.refreshDashboardsCache();
         cacheResource.refreshMetricConfigCache();
