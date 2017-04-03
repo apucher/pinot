@@ -1,14 +1,9 @@
-package com.linkedin.thirdeye.rootcause;
+package com.linkedin.thirdeye.rootcause.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.linkedin.thirdeye.anomaly.ThirdEyeAnomalyConfiguration;
-import com.linkedin.thirdeye.api.TimeGranularity;
-import com.linkedin.thirdeye.client.MetricFunction;
 import com.linkedin.thirdeye.client.ThirdEyeCacheRegistry;
-import com.linkedin.thirdeye.client.ThirdEyeRequest;
-import com.linkedin.thirdeye.client.ThirdEyeResponse;
 import com.linkedin.thirdeye.common.ThirdEyeConfiguration;
-import com.linkedin.thirdeye.constant.MetricAggFunction;
 import com.linkedin.thirdeye.datalayer.bao.DatasetConfigManager;
 import com.linkedin.thirdeye.datalayer.bao.EventManager;
 import com.linkedin.thirdeye.datalayer.bao.jdbc.DatasetConfigManagerImpl;
@@ -18,9 +13,7 @@ import com.linkedin.thirdeye.datalayer.util.DaoProviderUtil;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import org.apache.commons.cli.BasicParser;
@@ -129,27 +122,30 @@ public class DataLoader {
 
       DatasetConfigDTO config = datasetDAO.findByDataset(dataset);
 
-      List<MetricFunction> functions = new ArrayList<>();
-      functions.add(new MetricFunction(MetricAggFunction.COUNT, "*"));
+      // TODO adapt to recent API changes
+      throw new IllegalStateException("not implemented yet");
 
-//      TimeGranularity tg = new TimeGranularity(config.getTimeDuration(), config.getTimeUnit());
-//      long startTime = tg.convertToUnit(monitoringStart);
-//      long endTime = tg.convertToUnit(monitoringEnd);
-//      LOG.info("column={} startTime={} endTime={}", config.getTimeColumn(), startTime, endTime);
-
-      ThirdEyeRequest request = ThirdEyeRequest.newBuilder()
-          .setCollection(dataset)
-          .setMetricFunctions(functions)
-          .setStartTimeInclusive(monitoringStart)
-          .setEndTimeExclusive(monitoringEnd)
-          .addGroupBy(config.getTimeColumn())
-          .build("ref");
-
-      ThirdEyeResponse response = cacheRegistry.getQueryCache().getQueryResult(request);
-      LOG.info("pinot: datTimeSpec: {}", response.getDataTimeSpec());
-      LOG.info("pinot: groupKeyColumns: {}", response.getGroupKeyColumns());
-      LOG.info("pinot: metricFunctions: {}", response.getMetricFunctions());
-      LOG.info("pinot: numRows: {}", response.getNumRows());
+//      List<MetricFunction> functions = new ArrayList<>();
+//      functions.add(new MetricFunction(MetricAggFunction.COUNT, "*"));
+//
+////      TimeGranularity tg = new TimeGranularity(config.getTimeDuration(), config.getTimeUnit());
+////      long startTime = tg.convertToUnit(monitoringStart);
+////      long endTime = tg.convertToUnit(monitoringEnd);
+////      LOG.info("column={} startTime={} endTime={}", config.getTimeColumn(), startTime, endTime);
+//
+//      ThirdEyeRequest request = ThirdEyeRequest.newBuilder()
+//          .setCollection(dataset)
+//          .setMetricFunctions(functions)
+//          .setStartTimeInclusive(monitoringStart)
+//          .setEndTimeExclusive(monitoringEnd)
+//          .addGroupBy(config.getTimeColumn())
+//          .build("ref");
+//
+//      ThirdEyeResponse response = cacheRegistry.getQueryCache().getQueryResult(request);
+//      LOG.info("pinot: datTimeSpec: {}", response.getDataTimeSpec());
+//      LOG.info("pinot: groupKeyColumns: {}", response.getGroupKeyColumns());
+//      LOG.info("pinot: metricFunctions: {}", response.getMetricFunctions());
+//      LOG.info("pinot: numRows: {}", response.getNumRows());
     }
 
 //    if(cmd.hasOption(ID_MOCK)) {

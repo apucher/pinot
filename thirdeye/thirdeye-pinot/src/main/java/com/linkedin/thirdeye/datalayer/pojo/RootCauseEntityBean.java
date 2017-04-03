@@ -4,6 +4,7 @@ public class RootCauseEntityBean extends AbstractBean {
   public enum EntityType {
     METRIC,
     DIMENSION,
+    METRIC_DIMENSION,
     SYSTEM,
     EVENT,
     UNKNOWN
