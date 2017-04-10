@@ -67,8 +67,8 @@ public class FrameworkTest {
   @BeforeMethod
   void beforeMethod() {
     this.always = Arrays.asList(
-        makeEntity(0, EntityType.DIMENSION, "country"),
-        makeEntity(1, EntityType.DIMENSION, "pagekey"),
+        makeEntity(0, EntityType.DIMENSION, "country=us"),
+        makeEntity(1, EntityType.DIMENSION, "country=uk"),
         makeEntity(2, EntityType.UNKNOWN, "unknown"));
 
     this.first = Arrays.asList(
@@ -77,14 +77,15 @@ public class FrameworkTest {
         makeEntity(12, EntityType.SYSTEM, "system_c"));
 
     this.second = Arrays.asList(
-        makeEntity(20, EntityType.DIMENSION, "dimension_a"),
-        makeEntity(21, EntityType.DIMENSION, "dimension_b"),
+        makeEntity(20, EntityType.DIMENSION, "dimension=a"),
+        makeEntity(21, EntityType.DIMENSION, "dimension=b"),
         makeEntity(22, EntityType.EVENT, "event_a"));
 
     this.metricDimensions = Arrays.asList(
-        makeEntity(100, EntityType.METRIC_DIMENSION, "metric_a|country"),
-        makeEntity(101, EntityType.METRIC_DIMENSION, "metric_a|pagekey"),
-        makeEntity(102, EntityType.METRIC_DIMENSION, "metric_b|country"));
+        makeEntity(100, EntityType.METRIC_DIMENSION, "metric_a|country=us"),
+        makeEntity(101, EntityType.METRIC_DIMENSION, "metric_a|country=uk"),
+        makeEntity(102, EntityType.METRIC_DIMENSION, "metric_b|country=us"));
+        // metric_b need not have country=uk dimension
 
     this.mdr = new MetricDimensionRewriter(new MockEntityManager(metricDimensions));
 

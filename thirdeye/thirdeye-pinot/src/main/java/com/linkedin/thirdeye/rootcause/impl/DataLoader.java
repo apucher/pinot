@@ -9,13 +9,13 @@ import com.linkedin.thirdeye.datalayer.bao.EventManager;
 import com.linkedin.thirdeye.datalayer.bao.jdbc.DatasetConfigManagerImpl;
 import com.linkedin.thirdeye.datalayer.bao.jdbc.EventManagerImpl;
 import com.linkedin.thirdeye.datalayer.dto.DatasetConfigDTO;
+import com.linkedin.thirdeye.datalayer.dto.RootCauseEntityDTO;
+import com.linkedin.thirdeye.datalayer.pojo.RootCauseEntityBean;
 import com.linkedin.thirdeye.datalayer.util.DaoProviderUtil;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
+
+import java.io.*;
+import java.util.*;
+
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -23,6 +23,7 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
@@ -30,8 +31,7 @@ import org.slf4j.LoggerFactory;
 
 
 /**
- * Harness for manual testing of AnomalyFunctionEx implementations
- * without standing up all of ThirdEye
+ * DataLoader for populating root cause analysis database
  */
 public class DataLoader {
   private static final Logger LOG = LoggerFactory.getLogger(DataLoader.class);
@@ -44,6 +44,10 @@ public class DataLoader {
   private static final String ID_METRIC = "enable-metric";
   private static final String ID_METRIC_CORRELATION = "metric-correlation";
   private static final String ID_OUTPUT_PATH = "output";
+
+  private static final String ID_METRIC_PATH = "metric-path";
+  private static final String ID_DIMENSION_PATH = "dimension-path";
+  private static final String ID_METRIC_DIMENSION = "metric-dimension";
 
   public static void main(String[] args) throws Exception {
     Options options = makeParserOptions();
@@ -166,6 +170,41 @@ public class DataLoader {
 //      factory.addDataSource("event", new ThirdEyeEventDataSource(manager));
     }
 
+    Collection<String> metrics = null;
+    if(cmd.hasOption(ID_METRIC_PATH)) {
+      LOG.info("Reading metrics from '{}'", cmd.getOptionValue(ID_METRIC_PATH));
+      metrics = parseMetricConfig(new FileReader(new File(cmd.getOptionValue(ID_METRIC_PATH))));
+      LOG.info("*** Metrics:\n{}", StringUtils.join(metrics, "\n"));
+    }
+
+    Map<String, Collection<String>> dimensions = null;
+    if(cmd.hasOption(ID_DIMENSION_PATH)) {
+      LOG.info("Reading dimensions from '{}'", cmd.getOptionValue(ID_DIMENSION_PATH));
+      dimensions = parseDimensionConfig(new FileReader(new File(cmd.getOptionValue(ID_DIMENSION_PATH))));
+      LOG.info("*** Dimensions:\n{}", StringUtils.join(dimensions.keySet(), "\n"));
+    }
+
+    Collection<RootCauseEntityDTO> rootCauseEntities = null;
+    if(cmd.hasOption(ID_METRIC_DIMENSION)) {
+      if(!cmd.hasOption(ID_METRIC_PATH)) {
+        LOG.error("--{} requires --{}", ID_METRIC_DIMENSION, ID_METRIC_PATH);
+        System.exit(1);
+      }
+      if(!cmd.hasOption(ID_DIMENSION_PATH)) {
+        LOG.error("--{} requires --{}", ID_METRIC_DIMENSION, ID_DIMENSION_PATH);
+        System.exit(1);
+      }
+
+      LOG.info("Generating metric-dimension cross products");
+      rootCauseEntities = metricDimensionCrossProducts(metrics, dimensions);
+
+      Collection<String> names = new ArrayList<>();
+      for(RootCauseEntityDTO dto : rootCauseEntities) {
+        names.add(dto.getName());
+      }
+      LOG.info("*** MetricDimensions:\n{}", StringUtils.join(names, "\n"));
+    }
+
 //    AnomalyFunctionExContext context = new AnomalyFunctionExContext();
 //    context.setClassName(classname);
 //    context.setMonitoringWindowStart(monitoringStart);
@@ -209,33 +248,23 @@ public class DataLoader {
   private static Options makeParserOptions() {
     Options options = new Options();
 
-    Option monitoringFrom = new Option("s", ID_MONITOR_FROM, true,
-        "Monitoring window start timestamp in seconds. (Default: monitoring end timestamp - 1 hour)");
-    options.addOption(monitoringFrom);
-
-    Option monitoringTo = new Option("t", ID_MONITOR_TO, true,
-        "Monitoring window end timestamp in seconds. (Default: now)");
-    options.addOption(monitoringTo);
-
-    Option pinot = new Option("P", ID_PINOT, true,
-        "Enables 'pinot' data source. Requires path to pinot client config YAML file.");
-    options.addOption(pinot);
-
-    Option thirdeye = new Option("T", ID_THIRDEYE, true,
-        "Enables access to the ThirdEye internal database. Requires path to thirdeye persistence config YAML file.");
-    options.addOption(thirdeye);
-
-    Option event = new Option("E", ID_EVENT, false,
-        "Enables 'event' data source. (Requires: " + ID_THIRDEYE + ")");
-    options.addOption(event);
-
-    Option metric = new Option("M", ID_METRIC_CORRELATION, false,
-        "Enables 'metric' data source. (Requires: " + ID_THIRDEYE + ")");
-    options.addOption(metric);
-
-    Option asJson = new Option("o", ID_OUTPUT_PATH, true,
-        "Output path for CSV file generated by the DataLoader.");
-    options.addOption(asJson);
+    options.addOption(new Option("s", ID_MONITOR_FROM, true,
+        "Monitoring window start timestamp in seconds. (Default: monitoring end timestamp - 1 hour)"));
+    options.addOption(new Option("t", ID_MONITOR_TO, true,
+        "Monitoring window end timestamp in seconds. (Default: now)"));
+    options.addOption(new Option("P", ID_PINOT, true,
+        "Enables 'pinot' data source. Requires path to pinot client config YAML file."));
+    options.addOption(new Option("T", ID_THIRDEYE, true,
+        "Enables access to the ThirdEye internal database. Requires path to thirdeye persistence config YAML file."));
+    options.addOption(new Option("E", ID_EVENT, false,
+        "Enables 'event' data source. (Requires: " + ID_THIRDEYE + ")"));
+    options.addOption(new Option("M", ID_METRIC_CORRELATION, false,
+        "Enables 'metric' data source. (Requires: " + ID_THIRDEYE + ")"));
+    options.addOption(new Option("o", ID_OUTPUT_PATH, true,
+        "Output path for CSV file generated by the DataLoader."));
+    options.addOption(new Option("m", ID_METRIC_PATH, true, "Path to metric file"));
+    options.addOption(new Option("d", ID_DIMENSION_PATH, true, "Path to dimension file"));
+    options.addOption(new Option("d", ID_METRIC_DIMENSION, false, "Generate metric-dimension cross product"));
 
     return options;
   }
@@ -250,9 +279,9 @@ public class DataLoader {
     return map;
   }
 
-  private static Map<String, String> parseConfigFile(File file) throws IOException {
+  private static Map<String, String> parseConfigFile(Reader r) throws IOException {
     Properties p = new Properties();
-    p.load(new FileReader(file));
+    p.load(r);
 
     Map<String, String> map = new HashMap<>();
     for(Map.Entry<Object, Object> e : p.entrySet()) {
@@ -265,4 +294,85 @@ public class DataLoader {
     ObjectMapper mapper = new ObjectMapper();
     return mapper.writeValueAsString(config);
   }
+
+  private static Collection<String> parseMetricConfig(Reader r) throws IOException {
+    List<String> list = new ArrayList<>();
+    BufferedReader br = new BufferedReader(r);
+
+    String l;
+    while((l = br.readLine()) != null) {
+      for(String m : l.split(",")) {
+        list.add(m);
+      }
+    }
+    return list;
+  }
+
+  private static Map<String, Collection<String>> parseDimensionConfig(Reader r) throws IOException {
+    Properties p = new Properties();
+    p.load(r);
+
+    Map<String, Collection<String>> map = new HashMap<>();
+    for(Map.Entry<Object, Object> e : p.entrySet()) {
+      map.put(e.getKey().toString(), Arrays.asList(e.getValue().toString().split(",")));
+    }
+    return map;
+  }
+
+  private static Collection<RootCauseEntityDTO> metricDimensionCrossProducts(Collection<String> metrics, Map<String, Collection<String>> dimensions) {
+    List<RootCauseEntityDTO> dtos = new ArrayList<>();
+    for(String m : metrics) {
+      dtos.addAll(metricDimensionPow2(m, dimensions));
+    }
+    return dtos;
+  }
+
+  private static Collection<RootCauseEntityDTO> metricDimensionPow2(String metric, Map<String, Collection<String>> dimensions) {
+    List<RootCauseEntityDTO> dtos = new ArrayList<>();
+    List<Map.Entry<String, Collection<String>>> entries = new ArrayList<>(dimensions.entrySet());
+    Collections.sort(entries, new Comparator<Map.Entry<String, Collection<String>>>() {
+      @Override
+      public int compare(Map.Entry<String, Collection<String>> o1, Map.Entry<String, Collection<String>> o2) {
+        return o1.getKey().compareTo(o2.getKey());
+      }
+    });
+
+    for(int i=0; i<entries.size(); i++) {
+      for(int j=i+1; j<entries.size(); j++) {
+        Map.Entry<String, Collection<String>> d1 = entries.get(i);
+        Map.Entry<String, Collection<String>> d2 = entries.get(j);
+
+        dtos.addAll(metricDimensionPow2Helper(metric, d1.getKey(), d1.getValue(), d2.getKey(), d2.getValue()));
+      }
+    }
+    return dtos;
+  }
+
+  private static Collection<RootCauseEntityDTO> metricDimensionPow2Helper(String metric, String dim1, Collection<String> val1, String dim2, Collection<String> val2) {
+    if(Objects.equals(dim1, dim2))
+      return Collections.emptyList();
+
+    List<RootCauseEntityDTO> dtos = new ArrayList<>();
+    for(String v1 : val1) {
+      for(String v2 : val2) {
+        String s1 = dim1 + "=" + v1;
+        String s2 = dim2 + "=" + v2;
+
+        String name;
+        if(s1.compareTo(s2) <= 0) {
+          name = metric + "|" + s1 + "|" + s2;
+        } else {
+          name = metric + "|" + s2 + "|" + s1;
+        }
+
+        RootCauseEntityDTO dto = new RootCauseEntityDTO();
+        dto.setName(name);
+        dto.setType(RootCauseEntityBean.EntityType.METRIC_DIMENSION);
+
+        dtos.add(dto);
+      }
+    }
+    return dtos;
+  }
+
 }
