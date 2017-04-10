@@ -20,7 +20,7 @@ import com.linkedin.thirdeye.client.pinot.PinotThirdEyeClientConfig;
 
 public class ResultSetGroupCacheLoader extends CacheLoader<PinotQuery, ResultSetGroup> {
   private static final Logger LOG = LoggerFactory.getLogger(ResultSetGroupCacheLoader.class);
-  
+
   private static int MAX_CONNECTIONS;
   static {
     try {

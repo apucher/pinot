@@ -2,10 +2,14 @@ package com.linkedin.thirdeye.dataframe;
 
 import com.linkedin.pinot.client.ResultSet;
 import com.linkedin.pinot.client.ResultSetGroup;
+import com.linkedin.thirdeye.client.MetricFunction;
+import com.linkedin.thirdeye.client.ThirdEyeResponse;
+import com.linkedin.thirdeye.client.ThirdEyeResponseRow;
 import com.udojava.evalex.Expression;
 import java.io.IOException;
 import java.io.Reader;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -290,6 +294,30 @@ public class DataFrame {
   }
 
   /**
+   * Returns a copy of the DataFrame containing at maximum the first {@code n} rows of the DataFrame.
+   * If {@code n} is larger than the DataFrame size, the entire DataFrame is returned. Additional rows
+   * to make up the difference between {@code n} and the size are not padded.
+   *
+   * @param n number of elements
+   * @return DataFrame copy with at most the first {@code n} rows
+   */
+  public DataFrame head(int n) {
+    return this.slice(0, n);
+  }
+
+  /**
+   * Returns a copy of the DataFrame containing at maximum the last {@code n} rows of the DataFrame.
+   * If {@code n} is larger than the DataFrame size, the entire DataFrame is returned. Additional rows
+   * to make up the difference between {@code n} and the size are not padded.
+   *
+   * @param n number of elements
+   * @return DataFrame copy with at most the last {@code n} rows
+   */
+  public DataFrame tail(int n) {
+    return this.slice(this.size() - n, this.size());
+  }
+
+  /**
    * Returns {@code true} is the DataFrame does not hold any rows. Otherwise, returns {@code false}.
    *
    * @return {@code true} is empty, {@code false} otherwise.
@@ -326,7 +354,7 @@ public class DataFrame {
    */
   public DataFrame addSeries(String seriesName, Series series) {
     if(seriesName == null || !SERIES_NAME_PATTERN.matcher(seriesName).matches())
-      throw new IllegalArgumentException(String.format("Series name must match pattern '%s'", SERIES_NAME_PATTERN));
+      throw new IllegalArgumentException(String.format("Series name '%s' does not match pattern '%s'", seriesName, SERIES_NAME_PATTERN));
     if(!this.series.isEmpty() && series.size() != this.size())
       throw new IllegalArgumentException("DataFrame index and series must be of same length");
     this.series.put(seriesName, series);
@@ -1120,7 +1148,7 @@ public class DataFrame {
         name = "_" + name;
 
       if(!SERIES_NAME_PATTERN.matcher(name).matches()) {
-        throw new IllegalArgumentException(String.format("Series name must match pattern '%s'", SERIES_NAME_PATTERN));
+        throw new IllegalArgumentException(String.format("Series name '%s' does not match pattern '%s'", name, SERIES_NAME_PATTERN));
       }
       header2name.put(h, name);
     }
@@ -1248,5 +1276,55 @@ public class DataFrame {
     }
 
     return DataFrame.toSeries(values);
+  }
+
+  /**
+   * Reads in a ThirdEyeResponse and returns it as a DataFrame.
+   *
+   * <br/><b>NOTE:</b> cannot parse a query result with multiple metric functions
+   *
+   * @param response ThirdEyeResponse
+   * @return ThirdEyeResponse as DataFrame
+   * @throws IllegalArgumentException if the result cannot be parsed
+   */
+  public static DataFrame fromThirdEyeResponse(ThirdEyeResponse response) {
+    DataFrame df = new DataFrame();
+
+    if(response.getMetricFunctions().size() == 0)
+      return df;
+
+    if(response.getMetricFunctions().size() >= 2)
+      throw new IllegalArgumentException("Only single metric function supported");
+
+    MetricFunction mf = response.getMetricFunctions().get(0);
+
+    int size = response.getNumRowsFor(mf);
+    List<String> seriesNames = new ArrayList<>();
+    seriesNames.addAll(response.getGroupKeyColumns());
+    seriesNames.add("value");
+
+    if(size <= 0) {
+      for(String s : seriesNames) {
+        df.addSeries(s, StringSeries.empty());
+      }
+      return df;
+    }
+
+    String[][] values = new String[seriesNames.size()][size];
+
+    for(int i=0; i<size; i++) {
+      ThirdEyeResponseRow r = response.getRow(i);
+      for(int j=0; j<seriesNames.size()-1; j++) {
+        values[j][i] = r.getDimensions().get(j);
+      }
+      values[seriesNames.size()-1][i] = String.valueOf(r.getMetrics().get(0));
+    }
+
+    for(int j=0; j<seriesNames.size(); j++) {
+      StringSeries s = StringSeries.buildFrom(values[j]);
+      df.addSeries(seriesNames.get(j), s.get(s.inferType()));
+    }
+
+    return df;
   }
 }

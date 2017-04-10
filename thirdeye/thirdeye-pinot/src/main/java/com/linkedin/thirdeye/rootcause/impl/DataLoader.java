@@ -2,13 +2,23 @@ package com.linkedin.thirdeye.rootcause.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.linkedin.thirdeye.anomaly.ThirdEyeAnomalyConfiguration;
+import com.linkedin.thirdeye.api.TimeGranularity;
+import com.linkedin.thirdeye.client.DAORegistry;
+import com.linkedin.thirdeye.client.MetricFunction;
 import com.linkedin.thirdeye.client.ThirdEyeCacheRegistry;
+import com.linkedin.thirdeye.client.ThirdEyeRequest;
+import com.linkedin.thirdeye.client.ThirdEyeResponse;
 import com.linkedin.thirdeye.common.ThirdEyeConfiguration;
+import com.linkedin.thirdeye.constant.MetricAggFunction;
+import com.linkedin.thirdeye.dataframe.DataFrame;
 import com.linkedin.thirdeye.datalayer.bao.DatasetConfigManager;
 import com.linkedin.thirdeye.datalayer.bao.EventManager;
+import com.linkedin.thirdeye.datalayer.bao.MetricConfigManager;
 import com.linkedin.thirdeye.datalayer.bao.jdbc.DatasetConfigManagerImpl;
 import com.linkedin.thirdeye.datalayer.bao.jdbc.EventManagerImpl;
+import com.linkedin.thirdeye.datalayer.bao.jdbc.MetricConfigManagerImpl;
 import com.linkedin.thirdeye.datalayer.dto.DatasetConfigDTO;
+import com.linkedin.thirdeye.datalayer.dto.MetricConfigDTO;
 import com.linkedin.thirdeye.datalayer.dto.RootCauseEntityDTO;
 import com.linkedin.thirdeye.datalayer.pojo.RootCauseEntityBean;
 import com.linkedin.thirdeye.datalayer.util.DaoProviderUtil;
@@ -16,6 +26,7 @@ import com.linkedin.thirdeye.datalayer.util.DaoProviderUtil;
 import java.io.*;
 import java.util.*;
 
+import java.util.concurrent.ConcurrentSkipListSet;
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -24,6 +35,8 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.math.stat.correlation.PearsonsCorrelation;
+import org.apache.commons.math.util.MathUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
@@ -68,7 +81,7 @@ public class DataLoader {
 //    LOG.info("Using anomaly function '{}'", classname);
 
     long monitoringEnd = Long.parseLong(cmd.getOptionValue(ID_MONITOR_TO, String.valueOf(DateTime.now(DateTimeZone.UTC).getMillis())));
-    long monitoringStart = Long.parseLong(cmd.getOptionValue(ID_MONITOR_FROM, String.valueOf(monitoringEnd - 3600000 * 24 * 7)));
+    long monitoringStart = Long.parseLong(cmd.getOptionValue(ID_MONITOR_FROM, String.valueOf(monitoringEnd - 3600000L * 24L * 28L)));
     LOG.info("Setting monitoring window from '{}' to '{}'", monitoringStart, monitoringEnd);
 
 //    Map<String, String> config = new HashMap<>();
@@ -83,31 +96,18 @@ public class DataLoader {
 //      System.exit(0);
 //    }
 
+    MetricConfigManager metricDAO = null;
+    DatasetConfigManager datasetDAO = null;
     if(cmd.hasOption(ID_THIRDEYE)) {
       LOG.info("Enabling ThirdEye database connector with config '{}'", cmd.getOptionValue(ID_THIRDEYE));
       File configFile = new File(cmd.getOptionValue(ID_THIRDEYE));
       DaoProviderUtil.init(configFile);
-    }
-
-    DatasetConfigManager datasetDAO = null;
-    if(cmd.hasOption(ID_METRIC_CORRELATION)) {
-      if(!cmd.hasOption(ID_THIRDEYE)) {
-        LOG.error("--{} requires --{}", ID_METRIC_CORRELATION, ID_THIRDEYE);
-        System.exit(1);
-      }
-
-      LOG.info("Enabling 'metric' datasource");
+      metricDAO = DaoProviderUtil.getInstance(MetricConfigManagerImpl.class);
       datasetDAO = DaoProviderUtil.getInstance(DatasetConfigManagerImpl.class);
-      LOG.info("metric: {}", datasetDAO.findAll());
     }
 
     ThirdEyeCacheRegistry cacheRegistry = null;
     if(cmd.hasOption(ID_PINOT)) {
-      if(!cmd.hasOption(ID_METRIC_CORRELATION)) {
-        LOG.error("--{} requires --{}", ID_PINOT, ID_METRIC);
-        System.exit(1);
-      }
-
       LOG.info("Enabling pinot connector with config '{}'", cmd.getOptionValue(ID_PINOT));
       File file = new File(cmd.getOptionValue(ID_PINOT));
       String rootDir = file.getParent();
@@ -120,37 +120,36 @@ public class DataLoader {
 
       ThirdEyeCacheRegistry.initializeCaches(thirdEyeConfig);
       cacheRegistry = ThirdEyeCacheRegistry.getInstance();
-      LOG.info("pinot: {}", cacheRegistry.getCollectionsCache().getCollections());
+    }
 
-      String dataset = "login_hourly_additive";
+    if(cmd.hasOption(ID_METRIC_CORRELATION)) {
+      if(!cmd.hasOption(ID_THIRDEYE)) {
+        LOG.error("--{} requires --{}", ID_METRIC_CORRELATION, ID_THIRDEYE);
+        System.exit(1);
+      }
 
-      DatasetConfigDTO config = datasetDAO.findByDataset(dataset);
+      if(!cmd.hasOption(ID_PINOT)) {
+        LOG.error("--{} requires --{}", ID_METRIC_CORRELATION, ID_PINOT);
+        System.exit(1);
+      }
 
-      // TODO adapt to recent API changes
-      throw new IllegalStateException("not implemented yet");
+      computeMetricCorrelations(monitoringEnd, monitoringStart, metricDAO, datasetDAO, cacheRegistry);
+    }
 
 //      List<MetricFunction> functions = new ArrayList<>();
-//      functions.add(new MetricFunction(MetricAggFunction.COUNT, "*"));
-//
-////      TimeGranularity tg = new TimeGranularity(config.getTimeDuration(), config.getTimeUnit());
-////      long startTime = tg.convertToUnit(monitoringStart);
-////      long endTime = tg.convertToUnit(monitoringEnd);
-////      LOG.info("column={} startTime={} endTime={}", config.getTimeColumn(), startTime, endTime);
-//
-//      ThirdEyeRequest request = ThirdEyeRequest.newBuilder()
-//          .setCollection(dataset)
-//          .setMetricFunctions(functions)
-//          .setStartTimeInclusive(monitoringStart)
-//          .setEndTimeExclusive(monitoringEnd)
-//          .addGroupBy(config.getTimeColumn())
-//          .build("ref");
+//      functions.add(new MetricFunction(MetricAggFunction.SUM, ));
+
+//      TimeGranularity tg = new TimeGranularity(config.getTimeDuration(), config.getTimeUnit());
+//      long startTime = tg.convertToUnit(monitoringStart);
+//      long endTime = tg.convertToUnit(monitoringEnd);
+//      LOG.info("column={} startTime={} endTime={}", config.getTimeColumn(), startTime, endTime);
 //
 //      ThirdEyeResponse response = cacheRegistry.getQueryCache().getQueryResult(request);
 //      LOG.info("pinot: datTimeSpec: {}", response.getDataTimeSpec());
 //      LOG.info("pinot: groupKeyColumns: {}", response.getGroupKeyColumns());
 //      LOG.info("pinot: metricFunctions: {}", response.getMetricFunctions());
 //      LOG.info("pinot: numRows: {}", response.getNumRows());
-    }
+//    }
 
 //    if(cmd.hasOption(ID_MOCK)) {
 //      LOG.info("Enabling 'mock' datasource");
@@ -242,6 +241,134 @@ public class DataLoader {
     if(cmd.hasOption(ID_PINOT)) {
       LOG.info("Forcing termination (Pinot connection workaround)");
       System.exit(0);
+    }
+  }
+
+  private static void computeMetricCorrelations(long monitoringEnd, long monitoringStart, MetricConfigManager metricDAO,
+      DatasetConfigManager datasetDAO, ThirdEyeCacheRegistry cacheRegistry) throws Exception {
+
+    // prepare dataset config lookup
+    List<DatasetConfigDTO> allDatasets = datasetDAO.findAll();
+    Map<String, DatasetConfigDTO> datasets = new HashMap<>();
+    for(DatasetConfigDTO d : allDatasets) {
+      datasets.put(d.getDataset(), d);
+    }
+
+    // prepare valid metrics
+    List<MetricConfigDTO> allMetrics = metricDAO.findAll();
+    Iterator<MetricConfigDTO> itMetric = allMetrics.iterator();
+    while(itMetric.hasNext()) {
+      MetricConfigDTO m = itMetric.next();
+
+      if(m.isDerived()) {
+        LOG.info("Skipping '{}' - is derived", m.getName());
+        itMetric.remove();
+        continue;
+      }
+
+      if(m.isInverseMetric()) {
+        LOG.info("Skipping '{}' - is inverse", m.getName());
+        itMetric.remove();
+        continue;
+      }
+
+      if(!m.isActive()) {
+        LOG.info("Skipping '{}' - is inactive", m.getName());
+        itMetric.remove();
+        continue;
+      }
+    }
+
+    // metric blacklist
+    Set<Integer> noDataBlacklist = new ConcurrentSkipListSet<>();
+
+    for (int i = 0; i < allMetrics.size(); i++) {
+      if(noDataBlacklist.contains(i)) {
+        continue;
+      }
+
+      // base metric
+      MetricConfigDTO m1 = allMetrics.get(i);
+      TimeGranularity tg1 = datasets.get(m1.getDataset()).bucketTimeGranularity();
+
+      ThirdEyeResponse res1 = getThirdEyeResponse(monitoringEnd, monitoringStart, cacheRegistry, datasets, m1);
+
+      if(res1 == null || res1.getNumRows() <= 0) {
+        LOG.info("Skipping '{}' - insufficient data", m1.getName());
+        noDataBlacklist.add(i);
+        continue;
+      }
+
+      DataFrame dfBase = DataFrame.fromThirdEyeResponse(res1);
+
+      if(dfBase.getDoubles("value").unique().size() <= 1) {
+        LOG.info("Skipping '{}' - invalid data", m1.getName());
+        noDataBlacklist.add(i);
+        continue;
+      }
+
+      for (int j = i + 1; j < allMetrics.size(); j++) {
+        if(noDataBlacklist.contains(j)) {
+          continue;
+        }
+
+        // comparison metric
+        MetricConfigDTO m2 = allMetrics.get(j);
+        TimeGranularity tg2 = datasets.get(m2.getDataset()).bucketTimeGranularity();
+
+        // TODO support resampling of data
+        if (!tg1.equals(tg2)) {
+          LOG.debug("Skipping '{}' and '{}' - different time spec", m1.getName(), m2.getName());
+          continue;
+        }
+
+        ThirdEyeResponse res2 = getThirdEyeResponse(monitoringEnd, monitoringStart, cacheRegistry, datasets, m2);
+
+        if(res2 == null || res2.getNumRows() <= 0) {
+          LOG.info("Skipping '{}' - insufficient data", m2.getName());
+          noDataBlacklist.add(j);
+          continue;
+        }
+
+        DataFrame dfCompare = DataFrame.fromThirdEyeResponse(res2);
+
+        if(dfCompare.getDoubles("value").unique().size() <= 1) {
+          LOG.info("Skipping '{}' - invalid data", m2.getName());
+          noDataBlacklist.add(j);
+          continue;
+        }
+
+        // TODO ensure time series alignment
+        int minSize = Math.min(dfBase.size(), dfCompare.size());
+        DataFrame dfBaseTrunc = dfBase.head(minSize);
+        DataFrame dfCompareTrunc = dfCompare.head(minSize);
+
+        double[] base = dfBaseTrunc.getDoubles("value").values();
+        double[] compare = dfCompareTrunc.getDoubles("value").values();
+
+        double corr = new PearsonsCorrelation().correlation(base, compare);
+
+        LOG.info("Correlating '{}' and '{}' - num_rows={}, corr={}", m1.getName(), m2.getName(), minSize, corr);
+      }
+    }
+  }
+
+  public static ThirdEyeResponse getThirdEyeResponse(long monitoringEnd, long monitoringStart,
+      ThirdEyeCacheRegistry cacheRegistry, Map<String, DatasetConfigDTO> datasets, MetricConfigDTO m)
+      throws Exception {
+    try {
+      List<MetricFunction> functions1 = new ArrayList<>();
+      functions1.add(new MetricFunction(MetricAggFunction.SUM, m.getName(), m.getId(), m.getDataset()));
+      ThirdEyeRequest request1 = ThirdEyeRequest.newBuilder()
+          .setMetricFunctions(functions1)
+          .setStartTimeInclusive(monitoringStart)
+          .setEndTimeExclusive(monitoringEnd)
+          .addGroupBy(datasets.get(m.getDataset()).getTimeColumn())
+          .build("ref");
+      return cacheRegistry.getQueryCache().getQueryResult(request1);
+    } catch (Exception e) {
+      LOG.warn("Error while fetching data for '{}'", m.getName());
+      return null;
     }
   }
 
@@ -374,5 +501,4 @@ public class DataLoader {
     }
     return dtos;
   }
-
 }
