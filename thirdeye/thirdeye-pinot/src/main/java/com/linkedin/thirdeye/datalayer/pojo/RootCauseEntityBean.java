@@ -1,5 +1,8 @@
 package com.linkedin.thirdeye.datalayer.pojo;
 
+import java.util.Map;
+
+
 public class RootCauseEntityBean extends AbstractBean {
   public enum EntityType {
     METRIC,
@@ -12,6 +15,7 @@ public class RootCauseEntityBean extends AbstractBean {
 
   String name;
   EntityType type = EntityType.UNKNOWN;
+  Map<String, String> properties;
 
   public EntityType getType() {
     return type;
@@ -27,5 +31,13 @@ public class RootCauseEntityBean extends AbstractBean {
 
   public void setName(String name) {
     this.name = name;
+  }
+
+  public Map<String, String> getProperties() {
+    return properties;
+  }
+
+  public void setProperties(Map<String, String> properties) {
+    this.properties = properties;
   }
 }

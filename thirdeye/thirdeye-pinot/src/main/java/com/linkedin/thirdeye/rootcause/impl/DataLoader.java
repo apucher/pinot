@@ -14,15 +14,20 @@ import com.linkedin.thirdeye.dataframe.DataFrame;
 import com.linkedin.thirdeye.datalayer.bao.DatasetConfigManager;
 import com.linkedin.thirdeye.datalayer.bao.EventManager;
 import com.linkedin.thirdeye.datalayer.bao.MetricConfigManager;
+import com.linkedin.thirdeye.datalayer.bao.RootCauseEntityManager;
 import com.linkedin.thirdeye.datalayer.bao.jdbc.DatasetConfigManagerImpl;
 import com.linkedin.thirdeye.datalayer.bao.jdbc.EventManagerImpl;
 import com.linkedin.thirdeye.datalayer.bao.jdbc.MetricConfigManagerImpl;
+import com.linkedin.thirdeye.datalayer.bao.jdbc.RootCauseEntityManagerImpl;
 import com.linkedin.thirdeye.datalayer.dto.DatasetConfigDTO;
+import com.linkedin.thirdeye.datalayer.dto.EventDTO;
 import com.linkedin.thirdeye.datalayer.dto.MetricConfigDTO;
 import com.linkedin.thirdeye.datalayer.dto.RootCauseEntityDTO;
 import com.linkedin.thirdeye.datalayer.pojo.RootCauseEntityBean;
 import com.linkedin.thirdeye.datalayer.util.DaoProviderUtil;
 
+import com.linkedin.thirdeye.rootcause.entities.EventEntity;
+import com.linkedin.thirdeye.rootcause.entities.MetricEntity;
 import java.io.*;
 import java.util.*;
 
@@ -62,6 +67,9 @@ public class DataLoader {
   private static final String ID_DIMENSION_PATH = "dimension-path";
   private static final String ID_METRIC_DIMENSION = "metric-dimension";
 
+  private static final String ID_LOAD_METRICS = "load-metrics";
+  private static final String ID_LOAD_EVENTS = "load-events";
+
   public static void main(String[] args) throws Exception {
     Options options = makeParserOptions();
     CommandLineParser parser = new BasicParser();
@@ -96,14 +104,18 @@ public class DataLoader {
 //      System.exit(0);
 //    }
 
+    EventManager eventDAO = null;
     MetricConfigManager metricDAO = null;
     DatasetConfigManager datasetDAO = null;
+    RootCauseEntityManager entityDAO = null;
     if(cmd.hasOption(ID_THIRDEYE)) {
       LOG.info("Enabling ThirdEye database connector with config '{}'", cmd.getOptionValue(ID_THIRDEYE));
       File configFile = new File(cmd.getOptionValue(ID_THIRDEYE));
       DaoProviderUtil.init(configFile);
       metricDAO = DaoProviderUtil.getInstance(MetricConfigManagerImpl.class);
       datasetDAO = DaoProviderUtil.getInstance(DatasetConfigManagerImpl.class);
+      eventDAO = DaoProviderUtil.getInstance(EventManagerImpl.class);
+      entityDAO = DaoProviderUtil.getInstance(RootCauseEntityManagerImpl.class);
     }
 
     ThirdEyeCacheRegistry cacheRegistry = null;
@@ -112,7 +124,7 @@ public class DataLoader {
       File file = new File(cmd.getOptionValue(ID_PINOT));
       String rootDir = file.getParent();
 
-//      System.setProperty("max_pinot_connections", "3");
+      System.setProperty("max_pinot_connections", "1");
 
       ThirdEyeConfiguration thirdEyeConfig = new ThirdEyeAnomalyConfiguration();
       thirdEyeConfig.setRootDir(rootDir);
@@ -136,37 +148,55 @@ public class DataLoader {
       computeMetricCorrelations(monitoringEnd, monitoringStart, metricDAO, datasetDAO, cacheRegistry);
     }
 
-//      List<MetricFunction> functions = new ArrayList<>();
-//      functions.add(new MetricFunction(MetricAggFunction.SUM, ));
-
-//      TimeGranularity tg = new TimeGranularity(config.getTimeDuration(), config.getTimeUnit());
-//      long startTime = tg.convertToUnit(monitoringStart);
-//      long endTime = tg.convertToUnit(monitoringEnd);
-//      LOG.info("column={} startTime={} endTime={}", config.getTimeColumn(), startTime, endTime);
-//
-//      ThirdEyeResponse response = cacheRegistry.getQueryCache().getQueryResult(request);
-//      LOG.info("pinot: datTimeSpec: {}", response.getDataTimeSpec());
-//      LOG.info("pinot: groupKeyColumns: {}", response.getGroupKeyColumns());
-//      LOG.info("pinot: metricFunctions: {}", response.getMetricFunctions());
-//      LOG.info("pinot: numRows: {}", response.getNumRows());
-//    }
-
-//    if(cmd.hasOption(ID_MOCK)) {
-//      LOG.info("Enabling 'mock' datasource");
-//      factory.addDataSource("mock", new ThirdEyeMockDataSource());
-//    }
-
-    EventManager eventDAO = null;
-    if(cmd.hasOption(ID_EVENT)) {
+    if(cmd.hasOption(ID_LOAD_METRICS)) {
       if(!cmd.hasOption(ID_THIRDEYE)) {
-        LOG.error("--{} requires --{}", ID_EVENT, ID_THIRDEYE);
+        LOG.error("--{} requires --{}", ID_LOAD_METRICS, ID_THIRDEYE);
         System.exit(1);
       }
 
-      LOG.info("Enabling 'event' datasource");
-      eventDAO = DaoProviderUtil.getInstance(EventManagerImpl.class);
-      LOG.info("event: {}", eventDAO.findAll());
-//      factory.addDataSource("event", new ThirdEyeEventDataSource(manager));
+      List<MetricConfigDTO> metrics = metricDAO.findAll();
+      for(MetricConfigDTO m : metrics) {
+        String name = String.format("metric:%s:%s", m.getDataset(), m.getName());
+
+        LOG.info("Loading '{}'", name);
+        RootCauseEntityDTO dto = new RootCauseEntityDTO();
+        dto.setType(RootCauseEntityBean.EntityType.METRIC);
+        dto.setName(name);
+
+        MetricEntity me = new MetricEntity();
+        me.setMetricId(m.getId());
+        me.setName(m.getName());
+        me.setDataset(m.getDataset());
+        me.saveToDTO(dto);
+
+        entityDAO.save(dto);
+      }
+    }
+
+    if(cmd.hasOption(ID_LOAD_EVENTS)) {
+      if(!cmd.hasOption(ID_THIRDEYE)) {
+        LOG.error("--{} requires --{}", ID_LOAD_EVENTS, ID_THIRDEYE);
+        System.exit(1);
+      }
+
+      List<EventDTO> events = eventDAO.findAll();
+      for(EventDTO e : events) {
+        String name = String.format("event:%s:%s:%d", e.getEventType(), e.getName(), e.getStartTime());
+
+        LOG.info("Loading '{}'", name);
+        RootCauseEntityDTO dto = new RootCauseEntityDTO();
+        dto.setType(RootCauseEntityBean.EntityType.EVENT);
+        dto.setName(name);
+
+        EventEntity ee = new EventEntity();
+        ee.setEventId(e.getId());
+        ee.setStart(e.getStartTime());
+        ee.setEnd(e.getEndTime());
+        ee.setType(e.getEventType());
+        ee.saveToDTO(dto);
+
+        entityDAO.save(dto);
+      }
     }
 
     Collection<String> metrics = null;
@@ -392,6 +422,9 @@ public class DataLoader {
     options.addOption(new Option("m", ID_METRIC_PATH, true, "Path to metric file"));
     options.addOption(new Option("d", ID_DIMENSION_PATH, true, "Path to dimension file"));
     options.addOption(new Option("d", ID_METRIC_DIMENSION, false, "Generate metric-dimension cross product"));
+
+    options.addOption(new Option("d", ID_LOAD_METRICS, false, "Load ThirdEye metrics as root cause entities"));
+    options.addOption(new Option("d", ID_LOAD_EVENTS, false, "Load ThirdEye events as root cause entities"));
 
     return options;
   }
