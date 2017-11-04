@@ -2289,8 +2289,6 @@ public class DataFrame {
   /**
    * Reads in a Pinot ResultSetGroup and returns it as a DataFrame.
    *
-   * <br/><b>NOTE:</b> cannot parse a query result with multiple group aggregations
-   *
    * @param resultSetGroup pinot query result
    * @return Pinot query result as DataFrame
    * @throws IllegalArgumentException if the result cannot be parsed
