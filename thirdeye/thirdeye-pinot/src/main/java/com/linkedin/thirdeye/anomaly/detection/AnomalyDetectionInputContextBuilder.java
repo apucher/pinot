@@ -43,6 +43,7 @@ import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.NullArgumentException;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.quartz.JobExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -685,8 +686,8 @@ public class AnomalyDetectionInputContextBuilder {
     Set<TimeSeriesRow> timeSeriesRowSet = new HashSet<>();
     for (Pair<Long, Long> startEndInterval : startEndTimeRanges) {
       TimeSeriesRequest request = new TimeSeriesRequest(seedRequest);
-      DateTime startTime = new DateTime(startEndInterval.getFirst());
-      DateTime endTime = new DateTime(startEndInterval.getSecond());
+      DateTime startTime = new DateTime(startEndInterval.getFirst(), DateTimeZone.UTC);
+      DateTime endTime = new DateTime(startEndInterval.getSecond(), DateTimeZone.UTC);
       request.setStart(startTime);
       request.setEnd(endTime);
 
