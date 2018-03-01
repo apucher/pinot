@@ -15,7 +15,6 @@ import com.linkedin.thirdeye.api.TimeGranularity;
 import com.linkedin.thirdeye.datalayer.bao.AnomalyFunctionManager;
 import com.linkedin.thirdeye.datalayer.bao.AutotuneConfigManager;
 import com.linkedin.thirdeye.datalayer.bao.MergedAnomalyResultManager;
-import com.linkedin.thirdeye.datalayer.bao.RawAnomalyResultManager;
 import com.linkedin.thirdeye.datalayer.dto.AnomalyFunctionDTO;
 import com.linkedin.thirdeye.datalayer.dto.AutotuneConfigDTO;
 import com.linkedin.thirdeye.datalayer.dto.MergedAnomalyResultDTO;
@@ -68,7 +67,6 @@ public class DetectionJobResource {
   private final DetectionJobScheduler detectionJobScheduler;
   private final AnomalyFunctionManager anomalyFunctionDAO;
   private final MergedAnomalyResultManager mergedAnomalyResultDAO;
-  private final RawAnomalyResultManager rawAnomalyResultDAO;
   private final AutotuneConfigManager autotuneConfigDAO;
   private static final DAORegistry DAO_REGISTRY = DAORegistry.getInstance();
   private final AlertFilterAutotuneFactory alertFilterAutotuneFactory;
@@ -98,7 +96,6 @@ public class DetectionJobResource {
     this.detectionJobScheduler = detectionJobScheduler;
     this.anomalyFunctionDAO = DAO_REGISTRY.getAnomalyFunctionDAO();
     this.mergedAnomalyResultDAO = DAO_REGISTRY.getMergedAnomalyResultDAO();
-    this.rawAnomalyResultDAO = DAO_REGISTRY.getRawAnomalyResultDAO();
     this.autotuneConfigDAO = DAO_REGISTRY.getAutotuneConfigDAO();
     this.alertFilterAutotuneFactory = alertFilterAutotuneFactory;
     this.alertFilterFactory = alertFilterFactory;
@@ -987,8 +984,7 @@ public class DetectionJobResource {
     for (Map<String, String> config : tuningParameters) {
       LOG.info("Running backfill replay with parameter configuration: {}" + config.toString());
       FunctionReplayRunnable backfillRunnable =
-          new FunctionReplayRunnable(detectionJobScheduler, anomalyFunctionDAO, mergedAnomalyResultDAO,
-              rawAnomalyResultDAO, autotuneConfigDAO);
+          new FunctionReplayRunnable(detectionJobScheduler, anomalyFunctionDAO, mergedAnomalyResultDAO, autotuneConfigDAO);
       backfillRunnable.setTuningFunctionId(functionId);
       backfillRunnable.setFunctionAutotuneConfigId(targetDTO.getId());
       backfillRunnable.setReplayStart(replayStart);
@@ -1093,11 +1089,11 @@ public class DetectionJobResource {
       target = DAO_REGISTRY.getAutotuneConfigDAO().findById(autotuneId);
       functionReplayRunnable =
           new FunctionReplayRunnable(detectionJobScheduler, anomalyFunctionDAO, mergedAnomalyResultDAO,
-              rawAnomalyResultDAO, target.getConfiguration(), target.getFunctionId(), replayStart, replayEnd, false);
+              target.getConfiguration(), target.getFunctionId(), replayStart, replayEnd, false);
     } else {
       functionReplayRunnable =
           new FunctionReplayRunnable(detectionJobScheduler, anomalyFunctionDAO, mergedAnomalyResultDAO,
-              rawAnomalyResultDAO, new HashMap<String, String>(), functionId, replayStart, replayEnd, false);
+              new HashMap<String, String>(), functionId, replayStart, replayEnd, false);
     }
     functionReplayRunnable.setSpeedUp(speedUp);
     functionReplayRunnable.run();

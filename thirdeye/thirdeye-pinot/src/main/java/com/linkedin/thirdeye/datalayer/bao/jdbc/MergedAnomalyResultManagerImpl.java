@@ -94,33 +94,12 @@ public class MergedAnomalyResultManagerImpl extends AbstractManagerImpl<MergedAn
     }
   }
 
-  public MergedAnomalyResultDTO findById(Long id, boolean loadRawAnomalies) {
-    MergedAnomalyResultBean mergedAnomalyResultBean = genericPojoDao.get(id, MergedAnomalyResultBean.class);
-    if (mergedAnomalyResultBean != null) {
-      MergedAnomalyResultDTO mergedAnomalyResultDTO;
-      mergedAnomalyResultDTO = convertMergedAnomalyBean2DTO(mergedAnomalyResultBean);
-      return mergedAnomalyResultDTO;
-    } else {
-      return null;
-    }
-  }
-
-  public List<MergedAnomalyResultDTO> findByIdList(List<Long> idList, boolean loadRawAnomalies) {
-    List<MergedAnomalyResultBean> mergedAnomalyResultBeanList =
-        genericPojoDao.get(idList, MergedAnomalyResultBean.class);
-    if (CollectionUtils.isNotEmpty(mergedAnomalyResultBeanList)) {
-      return convertMergedAnomalyBean2DTO(mergedAnomalyResultBeanList);
-    } else {
-      return Collections.emptyList();
-    }
-  }
-
   public MergedAnomalyResultDTO findById(Long id) {
-    return findById(id, true);
+    return findById(id);
   }
 
   public List<MergedAnomalyResultDTO> findByIdList(List<Long> idList) {
-    return findByIdList(idList, true);
+    return findByIdList(idList);
   }
 
   @Override

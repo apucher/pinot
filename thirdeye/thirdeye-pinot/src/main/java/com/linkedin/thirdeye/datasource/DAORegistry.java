@@ -18,7 +18,6 @@ import com.linkedin.thirdeye.datalayer.bao.MergedAnomalyResultManager;
 import com.linkedin.thirdeye.datalayer.bao.MetricConfigManager;
 import com.linkedin.thirdeye.datalayer.bao.OnboardDatasetMetricManager;
 import com.linkedin.thirdeye.datalayer.bao.OverrideConfigManager;
-import com.linkedin.thirdeye.datalayer.bao.RawAnomalyResultManager;
 import com.linkedin.thirdeye.datalayer.bao.RootcauseSessionManager;
 import com.linkedin.thirdeye.datalayer.bao.TaskManager;
 import com.linkedin.thirdeye.datalayer.bao.jdbc.AlertConfigManagerImpl;
@@ -39,7 +38,6 @@ import com.linkedin.thirdeye.datalayer.bao.jdbc.MergedAnomalyResultManagerImpl;
 import com.linkedin.thirdeye.datalayer.bao.jdbc.MetricConfigManagerImpl;
 import com.linkedin.thirdeye.datalayer.bao.jdbc.OnboardDatasetMetricManagerImpl;
 import com.linkedin.thirdeye.datalayer.bao.jdbc.OverrideConfigManagerImpl;
-import com.linkedin.thirdeye.datalayer.bao.jdbc.RawAnomalyResultManagerImpl;
 import com.linkedin.thirdeye.datalayer.bao.jdbc.RootcauseSessionManagerImpl;
 import com.linkedin.thirdeye.datalayer.bao.jdbc.TaskManagerImpl;
 import com.linkedin.thirdeye.datalayer.util.DaoProviderUtil;
@@ -70,8 +68,6 @@ public class DAORegistry {
     return new DAORegistry();
   }
 
-
-
   /**
    * internal constructor.
    */
@@ -87,10 +83,6 @@ public class DAORegistry {
 
   public AlertConfigManager getAlertConfigDAO() {
     return DaoProviderUtil.getInstance(AlertConfigManagerImpl.class);
-  }
-
-  public RawAnomalyResultManager getRawAnomalyResultDAO() {
-    return DaoProviderUtil.getInstance(RawAnomalyResultManagerImpl.class);
   }
 
   public MergedAnomalyResultManager getMergedAnomalyResultDAO() {

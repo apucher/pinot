@@ -1,6 +1,5 @@
 package com.linkedin.thirdeye.dashboard.resources;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Multimap;
@@ -28,7 +27,6 @@ import com.linkedin.thirdeye.datalayer.bao.AutotuneConfigManager;
 import com.linkedin.thirdeye.datalayer.bao.DatasetConfigManager;
 import com.linkedin.thirdeye.datalayer.bao.MergedAnomalyResultManager;
 import com.linkedin.thirdeye.datalayer.bao.MetricConfigManager;
-import com.linkedin.thirdeye.datalayer.bao.RawAnomalyResultManager;
 import com.linkedin.thirdeye.datalayer.dto.AlertConfigDTO;
 import com.linkedin.thirdeye.datalayer.dto.AnomalyFeedbackDTO;
 import com.linkedin.thirdeye.datalayer.dto.AnomalyFunctionDTO;
@@ -104,7 +102,6 @@ public class AnomalyResource {
 
   private AnomalyFunctionManager anomalyFunctionDAO;
   private MergedAnomalyResultManager anomalyMergedResultDAO;
-  private RawAnomalyResultManager rawAnomalyResultDAO;
   private AlertConfigManager emailConfigurationDAO;
   private MetricConfigManager metricConfigDAO;
   private MergedAnomalyResultManager mergedAnomalyResultDAO;
@@ -119,7 +116,6 @@ public class AnomalyResource {
 
   public AnomalyResource(AnomalyFunctionFactory anomalyFunctionFactory, AlertFilterFactory alertFilterFactory) {
     this.anomalyFunctionDAO = DAO_REGISTRY.getAnomalyFunctionDAO();
-    this.rawAnomalyResultDAO = DAO_REGISTRY.getRawAnomalyResultDAO();
     this.anomalyMergedResultDAO = DAO_REGISTRY.getMergedAnomalyResultDAO();
     this.emailConfigurationDAO = DAO_REGISTRY.getAlertConfigDAO();
     this.metricConfigDAO = DAO_REGISTRY.getMetricConfigDAO();
@@ -227,49 +223,6 @@ public class AnomalyResource {
       alertFilter = alertFilterFactory.fromSpec(anomalyFunctionSpec.getAlertFilter());
     }
     return alertFilter.getProbability(mergedAnomaly);
-  }
-
-  //View raw anomalies for collection
-  @GET
-  @Path("/raw-anomalies/view")
-  @Produces(MediaType.APPLICATION_JSON)
-  public String viewRawAnomaliesInRange(@QueryParam("functionId") String functionId,
-      @QueryParam("dataset") String dataset, @QueryParam("startTimeIso") String startTimeIso,
-      @QueryParam("endTimeIso") String endTimeIso, @QueryParam("metric") String metric) throws JsonProcessingException {
-    LOG.warn("Call to a deprecated end point /dashboard/raw-anomalies/view" + getClass().getName());
-
-    if (StringUtils.isBlank(functionId) && StringUtils.isBlank(dataset)) {
-      throw new IllegalArgumentException("must provide dataset or functionId");
-    }
-    DateTime endTime = DateTime.now();
-    if (StringUtils.isNotEmpty(endTimeIso)) {
-      endTime = ISODateTimeFormat.dateTimeParser().parseDateTime(endTimeIso);
-    }
-    DateTime startTime = endTime.minusDays(7);
-    if (StringUtils.isNotEmpty(startTimeIso)) {
-      startTime = ISODateTimeFormat.dateTimeParser().parseDateTime(startTimeIso);
-    }
-
-    List<RawAnomalyResultDTO> rawAnomalyResults = new ArrayList<>();
-    if (StringUtils.isNotBlank(functionId)) {
-      rawAnomalyResults = rawAnomalyResultDAO.
-          findAllByTimeAndFunctionId(startTime.getMillis(), endTime.getMillis(), Long.valueOf(functionId));
-    } else if (StringUtils.isNotBlank(dataset)) {
-      List<AnomalyFunctionDTO> anomalyFunctions = anomalyFunctionDAO.findAllByCollection(dataset);
-      List<Long> functionIds = new ArrayList<>();
-      for (AnomalyFunctionDTO anomalyFunction : anomalyFunctions) {
-        if (StringUtils.isNotBlank(metric) && !anomalyFunction.getTopicMetric().equals(metric)) {
-          continue;
-        }
-        functionIds.add(anomalyFunction.getId());
-      }
-      for (Long id : functionIds) {
-        rawAnomalyResults.addAll(rawAnomalyResultDAO.
-            findAllByTimeAndFunctionId(startTime.getMillis(), endTime.getMillis(), id));
-      }
-    }
-    String response = new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(rawAnomalyResults);
-    return response;
   }
 
   /************* CRUD for anomaly functions of collection **********************************************/
@@ -639,7 +592,7 @@ public class AnomalyResource {
     // clone anomaly function and its anomaly results if requested
     if (isCloneFunction) {
       OnboardResource onboardResource =
-          new OnboardResource(anomalyFunctionDAO, mergedAnomalyResultDAO, rawAnomalyResultDAO);
+          new OnboardResource(anomalyFunctionDAO, mergedAnomalyResultDAO);
       long cloneId;
       String tag = "clone";
       try {
@@ -994,10 +947,8 @@ public class AnomalyResource {
 
     ArrayList<Long> anomalyIdList = new ArrayList<>();
     if (anomalyType.equals("raw")) {
-      List<RawAnomalyResultDTO> rawDTO = rawAnomalyResultDAO.findAllByTimeAndFunctionId(startTime, endTime, functionId);
-      for (RawAnomalyResultDTO dto : rawDTO) {
-        anomalyIdList.add(dto.getId());
-      }
+      throw new IllegalArgumentException("Raw anomalies no longer supported.");
+
     } else if (anomalyType.equals("merged")) {
       List<MergedAnomalyResultDTO> mergedResults =
           mergedAnomalyResultDAO.findByStartTimeInRangeAndFunctionId(startTime, endTime, functionId);
@@ -1104,13 +1055,6 @@ public class AnomalyResource {
       emailConfigurationDAO.update(emailConfiguration);
     }
 
-    // raw result mapping
-    List<RawAnomalyResultDTO> rawResults =
-        rawAnomalyResultDAO.findAllByTimeAndFunctionId(0, System.currentTimeMillis(), id);
-    for (RawAnomalyResultDTO result : rawResults) {
-      rawAnomalyResultDAO.delete(result);
-    }
-
     // merged anomaly mapping
     List<MergedAnomalyResultDTO> mergedResults = anomalyMergedResultDAO.findByFunctionId(id);
     for (MergedAnomalyResultDTO result : mergedResults) {
@@ -1156,29 +1100,6 @@ public class AnomalyResource {
       feedback.setComment(feedbackRequest.getComment());
       feedback.setFeedbackType(feedbackRequest.getFeedbackType());
       anomalyMergedResultDAO.updateAnomalyFeedback(result);
-    } catch (IOException e) {
-      throw new IllegalArgumentException("Invalid payload " + payload, e);
-    }
-  }
-
-  @POST
-  @Path(value = "anomaly-result/feedback/{anomaly_result_id}")
-  public void updateAnomalyResultFeedback(@PathParam("anomaly_result_id") long anomalyResultId, String payload) {
-    try {
-      RawAnomalyResultDTO result = rawAnomalyResultDAO.findById(anomalyResultId);
-      if (result == null) {
-        throw new IllegalArgumentException("AnomalyResult not found with id " + anomalyResultId);
-      }
-      AnomalyFeedbackDTO feedbackRequest = OBJECT_MAPPER.readValue(payload, AnomalyFeedbackDTO.class);
-      AnomalyFeedbackDTO feedback = result.getFeedback();
-      if (feedback == null) {
-        feedback = new AnomalyFeedbackDTO();
-        result.setFeedback(feedback);
-      }
-      feedback.setComment(feedbackRequest.getComment());
-      feedback.setFeedbackType(feedbackRequest.getFeedbackType());
-
-      rawAnomalyResultDAO.update(result);
     } catch (IOException e) {
       throw new IllegalArgumentException("Invalid payload " + payload, e);
     }

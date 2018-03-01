@@ -264,25 +264,6 @@ public class AnomalyDetectionInputContextBuilder {
 
     return this;
   }
-  /**
-   * Fetech existing RawAnomalyResults in the monitoring window
-   * @param windowStart
-   * the start time of the monitoring window
-   * @param windowEnd
-   * the end time of the monitoring window
-   * @return
-   */
-  public AnomalyDetectionInputContextBuilder fetchExistingRawAnomalies(DateTime windowStart, DateTime windowEnd) {
-    // We always find existing raw anomalies to prevent duplicate raw anomalies are generated
-    List<RawAnomalyResultDTO> existingRawAnomalies = getExistingRawAnomalies(anomalyFunctionSpec.getId(), windowStart.getMillis(), windowEnd.getMillis());
-    ArrayListMultimap<DimensionMap, RawAnomalyResultDTO> dimensionNamesToKnownRawAnomalies = ArrayListMultimap.create();
-    for (RawAnomalyResultDTO existingRawAnomaly : existingRawAnomalies) {
-      dimensionNamesToKnownRawAnomalies.put(existingRawAnomaly.getDimensions(), existingRawAnomaly);
-    }
-    this.anomalyDetectionInputContext.setExistingRawAnomalies(dimensionNamesToKnownRawAnomalies);
-
-    return this;
-  }
 
   /**
    * Fetch existing MergedAnomalyResults in the training window
@@ -354,25 +335,6 @@ public class AnomalyDetectionInputContextBuilder {
             dataRangeIntervals);
     this.anomalyDetectionInputContext.setScalingFactors(scalingFactors);
     return this;
-  }
-
-  /**
-   * Returns existing raw anomalies in the given monitoring window
-   * @param functionId the id of the anomaly function
-   * @param monitoringWindowStart inclusive
-   * @param monitoringWindowEnd inclusive but it doesn't matter
-   *
-   * @return known raw anomalies in the given window
-   */
-  private List<RawAnomalyResultDTO> getExistingRawAnomalies(long functionId, long monitoringWindowStart,
-      long monitoringWindowEnd) {
-    List<RawAnomalyResultDTO> results = new ArrayList<>();
-    try {
-      results.addAll(DAO_REGISTRY.getRawAnomalyResultDAO().findAllByTimeAndFunctionId(monitoringWindowStart, monitoringWindowEnd, functionId));
-    } catch (Exception e) {
-      LOG.error("Exception in getting existing anomalies", e);
-    }
-    return results;
   }
 
   /**

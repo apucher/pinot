@@ -2,7 +2,6 @@ package com.linkedin.thirdeye.tools;
 
 import com.linkedin.thirdeye.datalayer.bao.AnomalyFunctionManager;
 import com.linkedin.thirdeye.datalayer.bao.MergedAnomalyResultManager;
-import com.linkedin.thirdeye.datalayer.bao.RawAnomalyResultManager;
 import com.linkedin.thirdeye.datalayer.util.DaoProviderUtil;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -24,14 +23,12 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.ISODateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.Int;
 
 
 public class FetchAnomaliesInRangeAndOutputCSV {
   private static final Logger LOG = LoggerFactory.getLogger(FetchAnomaliesInRangeAndOutputCSV.class);
   private static AnomalyFunctionManager anomalyFunctionDAO;
   private static MergedAnomalyResultManager mergedAnomalyResultDAO;
-  private static RawAnomalyResultManager rawAnomalyResultDAO;
   private static DateTime dataRangeStart;
   private static DateTime dataRangeEnd;
   private static DateTimeFormatter dateTimeFormatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm");
@@ -40,8 +37,6 @@ public class FetchAnomaliesInRangeAndOutputCSV {
     DaoProviderUtil.init(persistenceFile);
     anomalyFunctionDAO = DaoProviderUtil
         .getInstance(com.linkedin.thirdeye.datalayer.bao.jdbc.AnomalyFunctionManagerImpl.class);
-    rawAnomalyResultDAO = DaoProviderUtil
-        .getInstance(com.linkedin.thirdeye.datalayer.bao.jdbc.RawAnomalyResultManagerImpl.class);
     mergedAnomalyResultDAO = DaoProviderUtil
         .getInstance(com.linkedin.thirdeye.datalayer.bao.jdbc.MergedAnomalyResultManagerImpl.class);
   }
@@ -179,7 +174,6 @@ public class FetchAnomaliesInRangeAndOutputCSV {
 
     resultNodes.clear();
     // Print Raw Results
-    resultNodes = thirdEyeDAO.fetchRawAnomaliesInRange(collection, metric, dataRangeStart, dataRangeEnd);
 
     LOG.info("Printing raw anomaly results from db...");
     outputname = output_folder.getAbsolutePath() + "/" +

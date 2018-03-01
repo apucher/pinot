@@ -331,11 +331,6 @@ public class AnomalyApplicationEndToEndTest {
     }
     Assert.assertTrue(completedCount > 0);
 
-    // Raw anomalies of the same function and dimensions should have been merged by the worker, so we
-    // check if any raw anomalies present, whose existence means the worker fails the synchronous merge.
-    List<RawAnomalyResultDTO> rawAnomalies = daoRegistry.getRawAnomalyResultDAO().findUnmergedByFunctionId(functionId);
-    Assert.assertTrue(rawAnomalies.size() == 0);
-
     // check merged anomalies
     List<MergedAnomalyResultDTO> mergedAnomalies = daoRegistry.getMergedAnomalyResultDAO().findByFunctionId(functionId);
     Assert.assertTrue(mergedAnomalies.size() > 0);

@@ -12,7 +12,6 @@ import com.linkedin.thirdeye.datalayer.bao.AnomalyFunctionManager;
 import com.linkedin.thirdeye.datalayer.dto.AnomalyFunctionDTO;
 import com.linkedin.thirdeye.datalayer.bao.MergedAnomalyResultManager;
 import com.linkedin.thirdeye.datalayer.dto.MergedAnomalyResultDTO;
-import com.linkedin.thirdeye.datalayer.bao.RawAnomalyResultManager;
 import com.linkedin.thirdeye.datalayer.dto.RawAnomalyResultDTO;
 import com.linkedin.thirdeye.datasource.DAORegistry;
 
@@ -31,7 +30,6 @@ import javax.validation.constraints.NotNull;
 public class OnboardResource {
   private final AnomalyFunctionManager anomalyFunctionDAO;
   private final MergedAnomalyResultManager mergedAnomalyResultDAO;
-  private final RawAnomalyResultManager rawAnomalyResultDAO;
 
   private static final DAORegistry DAO_REGISTRY = DAORegistry.getInstance();
   private static final Logger LOG = LoggerFactory.getLogger(OnboardResource.class);
@@ -39,15 +37,12 @@ public class OnboardResource {
   public OnboardResource() {
     this.anomalyFunctionDAO = DAO_REGISTRY.getAnomalyFunctionDAO();
     this.mergedAnomalyResultDAO = DAO_REGISTRY.getMergedAnomalyResultDAO();
-    this.rawAnomalyResultDAO = DAO_REGISTRY.getRawAnomalyResultDAO();
   }
 
   public OnboardResource(AnomalyFunctionManager anomalyFunctionManager,
-                         MergedAnomalyResultManager mergedAnomalyResultManager,
-                         RawAnomalyResultManager rawAnomalyResultManager) {
+                         MergedAnomalyResultManager mergedAnomalyResultManager) {
     this.anomalyFunctionDAO = anomalyFunctionManager;
     this.mergedAnomalyResultDAO = mergedAnomalyResultManager;
-    this.rawAnomalyResultDAO = rawAnomalyResultManager;
   }
 
   // endpoint clone function Ids to append a name defined in nameTags
@@ -389,14 +384,9 @@ public class OnboardResource {
         DateTime(monitoringWindowEndTime));
     LOG.info("Beginning cleanup merged anomaly results of functionId {} collection {} metric {}",
         functionId, anomalyFunction.getCollection(), anomalyFunction.getMetric());
-    int rawAnomaliesDeleted = 0;
-    List<RawAnomalyResultDTO> rawResults =
-        rawAnomalyResultDAO.findAllByTimeAndFunctionId(monitoringWindowStartTime, monitoringWindowEndTime, functionId);
-    if (CollectionUtils.isNotEmpty(rawResults)) {
-      rawAnomaliesDeleted = deleteRawResults(rawResults);
-    }
-    returnInfo.put("rawAnomaliesDeleted", rawAnomaliesDeleted);
-    LOG.info("{} raw anomaly results have been deleted", rawAnomaliesDeleted);
+
+    returnInfo.put("rawAnomaliesDeleted", 0);
+    LOG.info("{} raw anomaly results have been deleted", 0);
 
     return returnInfo;
   }
@@ -411,17 +401,5 @@ public class OnboardResource {
       mergedAnomaliesDeleted++;
     }
     return mergedAnomaliesDeleted;
-  }
-
-  // Delete raw anomaly results from rawResultDAO
-  private int deleteRawResults(List<RawAnomalyResultDTO> rawResults) {
-    LOG.info("Deleting raw anomaly results...");
-    int rawAnomaliesDeleted = 0;
-    for(RawAnomalyResultDTO rawResult : rawResults) {
-      LOG.info("...Deleting raw anomaly result id {} for functionId {}", rawResult.getId(), rawResult.getFunctionId());
-      rawAnomalyResultDAO.delete(rawResult);
-      rawAnomaliesDeleted++;
-    }
-    return rawAnomaliesDeleted;
   }
 }

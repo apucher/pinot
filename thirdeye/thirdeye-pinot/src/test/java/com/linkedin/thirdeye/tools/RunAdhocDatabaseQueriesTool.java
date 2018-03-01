@@ -1,7 +1,6 @@
 package com.linkedin.thirdeye.tools;
 
 import com.linkedin.thirdeye.anomaly.task.TaskConstants;
-import com.linkedin.thirdeye.auto.onboard.ConfigGenerator;
 import com.linkedin.thirdeye.datalayer.bao.AlertConfigManager;
 import com.linkedin.thirdeye.datalayer.bao.AnomalyFunctionManager;
 import com.linkedin.thirdeye.datalayer.bao.ClassificationConfigManager;
@@ -12,7 +11,6 @@ import com.linkedin.thirdeye.datalayer.bao.JobManager;
 import com.linkedin.thirdeye.datalayer.bao.MergedAnomalyResultManager;
 import com.linkedin.thirdeye.datalayer.bao.MetricConfigManager;
 import com.linkedin.thirdeye.datalayer.bao.OverrideConfigManager;
-import com.linkedin.thirdeye.datalayer.bao.RawAnomalyResultManager;
 import com.linkedin.thirdeye.datalayer.bao.TaskManager;
 import com.linkedin.thirdeye.datalayer.bao.jdbc.AlertConfigManagerImpl;
 import com.linkedin.thirdeye.datalayer.bao.jdbc.AnomalyFunctionManagerImpl;
@@ -24,7 +22,6 @@ import com.linkedin.thirdeye.datalayer.bao.jdbc.JobManagerImpl;
 import com.linkedin.thirdeye.datalayer.bao.jdbc.MergedAnomalyResultManagerImpl;
 import com.linkedin.thirdeye.datalayer.bao.jdbc.MetricConfigManagerImpl;
 import com.linkedin.thirdeye.datalayer.bao.jdbc.OverrideConfigManagerImpl;
-import com.linkedin.thirdeye.datalayer.bao.jdbc.RawAnomalyResultManagerImpl;
 import com.linkedin.thirdeye.datalayer.bao.jdbc.TaskManagerImpl;
 import com.linkedin.thirdeye.datalayer.dto.AlertConfigDTO;
 import com.linkedin.thirdeye.datalayer.dto.AnomalyFunctionDTO;
@@ -37,14 +34,11 @@ import com.linkedin.thirdeye.datalayer.dto.MergedAnomalyResultDTO;
 import com.linkedin.thirdeye.datalayer.dto.MetricConfigDTO;
 import com.linkedin.thirdeye.datalayer.dto.OverrideConfigDTO;
 import com.linkedin.thirdeye.datalayer.util.DaoProviderUtil;
-import com.linkedin.thirdeye.util.ThirdEyeUtils;
-
 import java.io.File;
 import java.sql.Timestamp;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
 import org.apache.commons.collections.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,7 +51,6 @@ public class RunAdhocDatabaseQueriesTool {
   private static final Logger LOG = LoggerFactory.getLogger(RunAdhocDatabaseQueriesTool.class);
 
   private AnomalyFunctionManager anomalyFunctionDAO;
-  private RawAnomalyResultManager rawResultDAO;
   private MergedAnomalyResultManager mergedResultDAO;
   private MetricConfigManager metricConfigDAO;
   private OverrideConfigManager overrideConfigDAO;
@@ -77,7 +70,6 @@ public class RunAdhocDatabaseQueriesTool {
   public void init(File persistenceFile) throws Exception {
     DaoProviderUtil.init(persistenceFile);
     anomalyFunctionDAO = DaoProviderUtil.getInstance(AnomalyFunctionManagerImpl.class);
-    rawResultDAO = DaoProviderUtil.getInstance(RawAnomalyResultManagerImpl.class);
     mergedResultDAO = DaoProviderUtil.getInstance(MergedAnomalyResultManagerImpl.class);
     metricConfigDAO = DaoProviderUtil.getInstance(MetricConfigManagerImpl.class);
     overrideConfigDAO = DaoProviderUtil.getInstance(OverrideConfigManagerImpl.class);

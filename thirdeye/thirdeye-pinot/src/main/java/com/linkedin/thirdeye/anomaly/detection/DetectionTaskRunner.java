@@ -15,7 +15,6 @@ import com.linkedin.thirdeye.api.DimensionMap;
 import com.linkedin.thirdeye.api.MetricTimeSeries;
 import com.linkedin.thirdeye.constant.AnomalyResultSource;
 import com.linkedin.thirdeye.datalayer.bao.MergedAnomalyResultManager;
-import com.linkedin.thirdeye.datalayer.bao.RawAnomalyResultManager;
 import com.linkedin.thirdeye.datalayer.dto.AnomalyFunctionDTO;
 import com.linkedin.thirdeye.datalayer.dto.DatasetConfigDTO;
 import com.linkedin.thirdeye.datalayer.dto.MergedAnomalyResultDTO;
@@ -112,7 +111,6 @@ public class DetectionTaskRunner implements TaskRunner {
     anomalyDetectionInputContextBuilder = anomalyDetectionInputContextBuilder
         .setFunction(anomalyFunctionSpec)
         .fetchTimeSeriesData(windowStart, windowEnd)
-        .fetchExistingRawAnomalies(windowStart, windowEnd)
         .fetchExistingMergedAnomalies(windowStart, windowEnd)
         .fetchScalingFactors(windowStart, windowEnd);
     if (anomalyFunctionSpec.isToCalculateGlobalMetric()) {
@@ -156,12 +154,7 @@ public class DetectionTaskRunner implements TaskRunner {
   }
 
   private void storeData(AnomalyDetectionOutputContext anomalyDetectionOutputContext) {
-    RawAnomalyResultManager rawAnomalyDAO = DAO_REGISTRY.getRawAnomalyResultDAO();
     MergedAnomalyResultManager mergedAmomalyDAO = DAO_REGISTRY.getMergedAnomalyResultDAO();
-
-    for (RawAnomalyResultDTO rawAnomalyResultDTO : anomalyDetectionOutputContext.getRawAnomalies().values()) {
-      rawAnomalyDAO.save(rawAnomalyResultDTO);
-    }
 
     for (MergedAnomalyResultDTO mergedAnomalyResultDTO : anomalyDetectionOutputContext.getMergedAnomalies().values()) {
       mergedAmomalyDAO.update(mergedAnomalyResultDTO);

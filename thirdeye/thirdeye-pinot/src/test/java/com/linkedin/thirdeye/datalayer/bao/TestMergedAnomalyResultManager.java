@@ -1,22 +1,20 @@
 package com.linkedin.thirdeye.datalayer.bao;
 
-import com.linkedin.thirdeye.datalayer.DaoTestUtils;
-import com.linkedin.thirdeye.datasource.DAORegistry;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import com.linkedin.thirdeye.anomaly.merge.AnomalyMergeConfig;
 import com.linkedin.thirdeye.anomaly.merge.AnomalyTimeBasedSummarizer;
 import com.linkedin.thirdeye.constant.AnomalyFeedbackType;
+import com.linkedin.thirdeye.datalayer.DaoTestUtils;
 import com.linkedin.thirdeye.datalayer.dto.AnomalyFeedbackDTO;
 import com.linkedin.thirdeye.datalayer.dto.AnomalyFunctionDTO;
 import com.linkedin.thirdeye.datalayer.dto.MergedAnomalyResultDTO;
 import com.linkedin.thirdeye.datalayer.dto.RawAnomalyResultDTO;
+import com.linkedin.thirdeye.datasource.DAORegistry;
+import java.util.ArrayList;
+import java.util.List;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 public class TestMergedAnomalyResultManager{
   MergedAnomalyResultDTO mergedResult = null;
@@ -25,14 +23,13 @@ public class TestMergedAnomalyResultManager{
 
   private DAOTestBase testDAOProvider;
   private AnomalyFunctionManager anomalyFunctionDAO;
-  private RawAnomalyResultManager rawAnomalyResultDAO;
   private MergedAnomalyResultManager mergedAnomalyResultDAO;
+
   @BeforeClass
   void beforeClass() {
     testDAOProvider = DAOTestBase.getInstance();
     DAORegistry daoRegistry = DAORegistry.getInstance();
     anomalyFunctionDAO = daoRegistry.getAnomalyFunctionDAO();
-    rawAnomalyResultDAO = daoRegistry.getRawAnomalyResultDAO();
     mergedAnomalyResultDAO = daoRegistry.getMergedAnomalyResultDAO();
   }
 
@@ -49,10 +46,6 @@ public class TestMergedAnomalyResultManager{
     // create anomaly result
     RawAnomalyResultDTO result = DaoTestUtils.getAnomalyResult();
     result.setFunction(function);
-    rawAnomalyResultDAO.save(result);
-
-    RawAnomalyResultDTO resultRet = rawAnomalyResultDAO.findById(result.getId());
-    Assert.assertEquals(resultRet.getFunction(), function);
 
     anomalyResultId = result.getId();
 
@@ -77,8 +70,7 @@ public class TestMergedAnomalyResultManager{
 
     // verify the merged result
     MergedAnomalyResultDTO mergedResultById = mergedAnomalyResultDAO.findById(mergedResult.getId());
-    Assert.assertEquals(mergedResultById.getAnomalyResults(), rawResults);
-    Assert.assertEquals(mergedResultById.getAnomalyResults().get(0).getId(), anomalyResultId);
+    Assert.assertTrue(mergedResultById.getAnomalyResults().isEmpty()); // raw anomalies should not be persisted
     Assert.assertEquals(mergedResultById.getDimensions(), result.getDimensions());
 
     List<MergedAnomalyResultDTO> mergedResultsByMetricDimensionsTime = mergedAnomalyResultDAO
@@ -100,7 +92,6 @@ public class TestMergedAnomalyResultManager{
 
     //verify feedback
     MergedAnomalyResultDTO mergedResult1 = mergedAnomalyResultDAO.findById(mergedResult.getId());
-    Assert.assertEquals(mergedResult1.getAnomalyResults().get(0).getId(), anomalyResultId);
     Assert.assertEquals(mergedResult1.getFeedback().getFeedbackType(), AnomalyFeedbackType.ANOMALY);
   }
 }
