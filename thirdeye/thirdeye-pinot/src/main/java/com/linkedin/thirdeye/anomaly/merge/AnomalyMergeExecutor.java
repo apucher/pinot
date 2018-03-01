@@ -304,7 +304,7 @@ public class AnomalyMergeExecutor implements Runnable {
       List<MergedAnomalyResultDTO> output) {
     // Now find last MergedAnomalyResult in same category
     MergedAnomalyResultDTO latestMergedResult =
-        mergedResultDAO.findLatestByFunctionIdOnly(function.getId(), true);
+        mergedResultDAO.findLatestByFunctionIdOnly(function.getId());
     // TODO : get mergeConfig from function
     List<MergedAnomalyResultDTO> mergedResults = AnomalyTimeBasedSummarizer
         .mergeAnomalies(latestMergedResult, unmergedResults, mergeConfig);
@@ -343,7 +343,7 @@ public class AnomalyMergeExecutor implements Runnable {
       // anomalies to be merged.
       MergedAnomalyResultDTO latestOverlappedMergedResult =
           mergedResultDAO.findLatestOverlapByFunctionIdDimensions(function.getId(), exploredDimensions.toString(),
-              anomalyWindowStart - mergeConfig.getSequentialAllowedGap(), anomalyWindowEnd, true);
+              anomalyWindowStart - mergeConfig.getSequentialAllowedGap(), anomalyWindowEnd);
 
       List<MergedAnomalyResultDTO> mergedResults = AnomalyTimeBasedSummarizer
           .mergeAnomalies(latestOverlappedMergedResult, unmergedResultsByDimensions,

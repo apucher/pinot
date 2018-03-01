@@ -85,8 +85,7 @@ public class GenerateAnomalyReport {
   void buildReport() {
     List<MergedAnomalyResultDTO> anomalies = new ArrayList<>();
     for (String collection : collections) {
-      anomalies.addAll(anomalyResultManager
-          .findByCollectionTime(collection, startTime.getTime(), endTime.getTime(), false));
+      anomalies.addAll(anomalyResultManager.findByCollectionTime(collection, startTime.getTime(), endTime.getTime()));
     }
 
     if (anomalies.size() == 0) {

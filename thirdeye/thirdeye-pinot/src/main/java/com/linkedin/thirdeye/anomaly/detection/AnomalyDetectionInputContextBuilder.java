@@ -292,25 +292,25 @@ public class AnomalyDetectionInputContextBuilder {
    * the end time of the monitoring window
    * @return
    */
-  public AnomalyDetectionInputContextBuilder fetchExistingMergedAnomalies(DateTime windowStart, DateTime windowEnd, boolean loadRawAnomalies) {
+  public AnomalyDetectionInputContextBuilder fetchExistingMergedAnomalies(DateTime windowStart, DateTime windowEnd) {
 // Get existing anomalies for this time range and this function id for all combinations of dimensions
     List<MergedAnomalyResultDTO> knownMergedAnomalies;
     if (anomalyFunction.useHistoryAnomaly()) {
       // if this anomaly function uses history data, then we get all time ranges
       return fetchExistingMergedAnomalies(
-          anomalyFunction.getDataRangeIntervals(windowStart.getMillis(), windowEnd.getMillis()), loadRawAnomalies);
+          anomalyFunction.getDataRangeIntervals(windowStart.getMillis(), windowEnd.getMillis()));
     } else {
       // otherwise, we only get the merge anomaly for current window in order to remove duplicate raw anomalies
       List<Pair<Long, Long>> currentTimeRange = new ArrayList<>();
       currentTimeRange.add(new Pair<>(windowStart.getMillis(), windowEnd.getMillis()));
-      return fetchExistingMergedAnomalies(currentTimeRange, loadRawAnomalies);
+      return fetchExistingMergedAnomalies(currentTimeRange);
     }
   }
 
-  public AnomalyDetectionInputContextBuilder fetchExistingMergedAnomalies(List<Pair<Long, Long>> startEndTimeRanges, boolean loadRawAnomalies) {
+  public AnomalyDetectionInputContextBuilder fetchExistingMergedAnomalies(List<Pair<Long, Long>> startEndTimeRanges) {
 // Get existing anomalies for this time range and this function id for all combinations of dimensions
     List<MergedAnomalyResultDTO> knownMergedAnomalies;
-    knownMergedAnomalies = getKnownMergedAnomalies(anomalyFunctionSpec.getId(), startEndTimeRanges, loadRawAnomalies);
+    knownMergedAnomalies = getKnownMergedAnomalies(anomalyFunctionSpec.getId(), startEndTimeRanges);
     // Sort the known merged and raw anomalies by their dimension names
     ArrayListMultimap<DimensionMap, MergedAnomalyResultDTO> dimensionMapToKnownMergedAnomalies = ArrayListMultimap.create();
     for (MergedAnomalyResultDTO knownMergedAnomaly : knownMergedAnomalies) {
@@ -384,14 +384,14 @@ public class AnomalyDetectionInputContextBuilder {
 
    * @return known merged anomalies of the function id that are needed for anomaly detection
    */
-  private List<MergedAnomalyResultDTO> getKnownMergedAnomalies(long functionId, List<Pair<Long, Long>> startEndTimeRanges, boolean loadRawAnomalies) {
+  private List<MergedAnomalyResultDTO> getKnownMergedAnomalies(long functionId, List<Pair<Long, Long>> startEndTimeRanges) {
 
     List<MergedAnomalyResultDTO> results = new ArrayList<>();
     for (Pair<Long, Long> startEndTimeRange : startEndTimeRanges) {
       try {
         results.addAll(
             DAO_REGISTRY.getMergedAnomalyResultDAO().findOverlappingByFunctionId(functionId, startEndTimeRange.getFirst(),
-                startEndTimeRange.getSecond(), loadRawAnomalies));
+                startEndTimeRange.getSecond()));
       } catch (Exception e) {
         LOG.error("Exception in getting merged anomalies", e);
       }
@@ -417,7 +417,7 @@ public class AnomalyDetectionInputContextBuilder {
       try {
         results.addAll(
             DAO_REGISTRY.getMergedAnomalyResultDAO().findOverlappingByFunctionIdDimensions(functionId,
-                startEndTimeRange.getFirst(), startEndTimeRange.getSecond(), dimensions.toString(), true));
+                startEndTimeRange.getFirst(), startEndTimeRange.getSecond(), dimensions.toString()));
       } catch (Exception e) {
         LOG.error("Exception in getting merged anomalies", e);
       }

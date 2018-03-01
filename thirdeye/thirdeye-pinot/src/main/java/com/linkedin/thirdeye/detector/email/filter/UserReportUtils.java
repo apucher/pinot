@@ -24,7 +24,7 @@ public class UserReportUtils {
   public static Boolean isUserReportAnomalyIsQualified(AlertFilter alertFilter,
       MergedAnomalyResultDTO userReportAnomaly) {
     MergedAnomalyResultManager mergedAnomalyDAO = DAORegistry.getInstance().getMergedAnomalyResultDAO();
-    List<MergedAnomalyResultDTO> systemAnomalies = mergedAnomalyDAO.findByFunctionId(userReportAnomaly.getFunction().getId(), false);
+    List<MergedAnomalyResultDTO> systemAnomalies = mergedAnomalyDAO.findByFunctionId(userReportAnomaly.getFunction().getId());
     long startTime = userReportAnomaly.getStartTime();
     long endTime = userReportAnomaly.getEndTime();
     long qualifiedRegion = 0;

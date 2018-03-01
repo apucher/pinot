@@ -267,7 +267,7 @@ public class RunAdhocDatabaseQueriesTool {
     long windowStart = windowEnd - duration;
 
     List<MergedAnomalyResultDTO> mergedAnomalyResults =
-        mergedResultDAO.findByCollectionTime(dataset, windowStart, windowEnd, false);
+        mergedResultDAO.findByCollectionTime(dataset, windowStart, windowEnd);
     LOG.info("{} anomalies to update for dataset {}", mergedAnomalyResults.size(), dataset);
     for (MergedAnomalyResultDTO mergedAnomalyResult : mergedAnomalyResults) {
       if (mergedAnomalyResult.isNotified()) {

@@ -280,10 +280,8 @@ public class AnomaliesResource {
       @QueryParam("filterOnly") @DefaultValue("false") boolean filterOnly
       ) throws Exception {
 
-    List<MergedAnomalyResultDTO> mergedAnomalies = mergedAnomalyResultDAO.findNotifiedByTime(startTime, endTime, false);
-    AnomaliesWrapper
-        anomaliesWrapper = constructAnomaliesWrapperFromMergedAnomalies(mergedAnomalies, searchFiltersJSON, pageNumber, filterOnly);
-    return anomaliesWrapper;
+    List<MergedAnomalyResultDTO> mergedAnomalies = mergedAnomalyResultDAO.findNotifiedByTime(startTime, endTime);
+    return constructAnomaliesWrapperFromMergedAnomalies(mergedAnomalies, searchFiltersJSON, pageNumber, filterOnly);
   }
 
   /**
@@ -507,7 +505,7 @@ public class AnomaliesResource {
       dimension = new DimensionMap(dimensionMapJSONString);
     }
     // fetch anomalies
-    List<MergedAnomalyResultDTO> anomalies = mergedAnomalyResultDAO.findByFunctionId(functionId, false);
+    List<MergedAnomalyResultDTO> anomalies = mergedAnomalyResultDAO.findByFunctionId(functionId);
 
     // apply feedback
     for (MergedAnomalyResultDTO anomaly : anomalies) {
@@ -542,7 +540,7 @@ public class AnomaliesResource {
     String dataset = metricConfig.getDataset();
     String metric = metricConfig.getName();
     List<MergedAnomalyResultDTO> mergedAnomalies =
-        mergedAnomalyResultDAO.findByCollectionMetricTime(dataset, metric, startTime, endTime, false);
+        mergedAnomalyResultDAO.findByCollectionMetricTime(dataset, metric, startTime, endTime);
     try {
       mergedAnomalies = AlertFilterHelper.applyFiltrationRule(mergedAnomalies, alertFilterFactory);
     } catch (Exception e) {
@@ -851,7 +849,7 @@ public class AnomaliesResource {
     AnomalyDetectionInputContext adInputContext = anomalyDetectionInputContextBuilder
         .setFunction(anomalyFunctionSpec)
         .fetchTimeSeriesDataByDimension(dataRangeIntervals, dimensions, true)
-        .fetchExistingMergedAnomalies(dataRangeIntervals, false)
+        .fetchExistingMergedAnomalies(dataRangeIntervals)
         .fetchScalingFactors(dataRangeIntervals).build();
 
     MetricTimeSeries metricTimeSeries = adInputContext.getDimensionMapMetricTimeSeriesMap().get(dimensions);

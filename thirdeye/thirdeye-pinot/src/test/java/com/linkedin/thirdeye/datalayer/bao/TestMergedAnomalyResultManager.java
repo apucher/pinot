@@ -83,7 +83,7 @@ public class TestMergedAnomalyResultManager{
 
     List<MergedAnomalyResultDTO> mergedResultsByMetricDimensionsTime = mergedAnomalyResultDAO
         .findByCollectionMetricDimensionsTime(mergedResult.getCollection(), mergedResult.getMetric(),
-            mergedResult.getDimensions().toString(), 0, System.currentTimeMillis(), true);
+            mergedResult.getDimensions().toString(), 0, System.currentTimeMillis());
 
     Assert.assertEquals(mergedResultsByMetricDimensionsTime.get(0), mergedResult);
   }

@@ -40,7 +40,6 @@ import com.linkedin.thirdeye.datalayer.dto.RawAnomalyResultDTO;
 import com.linkedin.thirdeye.datalayer.pojo.MetricConfigBean;
 import com.linkedin.thirdeye.datasource.DAORegistry;
 import com.linkedin.thirdeye.datasource.ThirdEyeCacheRegistry;
-import com.linkedin.thirdeye.detector.email.filter.AlertFilter;
 import com.linkedin.thirdeye.detector.email.filter.AlertFilterFactory;
 import com.linkedin.thirdeye.detector.email.filter.BaseAlertFilter;
 import com.linkedin.thirdeye.detector.email.filter.DummyAlertFilter;
@@ -55,13 +54,11 @@ import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import javax.validation.constraints.NotNull;
@@ -189,21 +186,18 @@ public class AnomalyResource {
         }
       }
 
-      boolean loadRawAnomalies = false;
-
       if (StringUtils.isNotBlank(metric)) {
         if (StringUtils.isNotBlank(exploredDimensions)) {
           anomalyResults =
               anomalyMergedResultDAO.findByCollectionMetricDimensionsTime(dataset, metric, exploredDimensions,
-                  startTime.getMillis(), endTime.getMillis(), loadRawAnomalies);
+                  startTime.getMillis(), endTime.getMillis());
         } else {
           anomalyResults = anomalyMergedResultDAO.findByCollectionMetricTime(dataset, metric, startTime.getMillis(),
-              endTime.getMillis(), loadRawAnomalies);
+              endTime.getMillis());
         }
       } else {
         anomalyResults =
-            anomalyMergedResultDAO.findByCollectionTime(dataset, startTime.getMillis(), endTime.getMillis(),
-                loadRawAnomalies);
+            anomalyMergedResultDAO.findByCollectionTime(dataset, startTime.getMillis(), endTime.getMillis());
       }
     } catch (Exception e) {
       LOG.error("Exception in fetching anomalies", e);
@@ -810,7 +804,7 @@ public class AnomalyResource {
     Interval timeSeriesInterval = observed.getTimeSeriesInterval();
     List<MergedAnomalyResultDTO> mergedAnomalyResults =
         mergedAnomalyResultDAO.findOverlappingByFunctionIdDimensions(anomalyFunctionSpec.getId(),
-            timeSeriesInterval.getStartMillis(), timeSeriesInterval.getEndMillis(), dimensionMap.toString(), true);
+            timeSeriesInterval.getStartMillis(), timeSeriesInterval.getEndMillis(), dimensionMap.toString());
 
     for (MergedAnomalyResultDTO mergedAnomalyResult : mergedAnomalyResults) {
       if (mergedAnomalyResult.getDimensions().equals(dimensionMap)) {
@@ -947,7 +941,7 @@ public class AnomalyResource {
    * true if there are labeled anomalies detected by the function
    */
   private boolean containsLabeledAnomalies(long functionId) {
-    List<MergedAnomalyResultDTO> mergedAnomalies = mergedAnomalyResultDAO.findByFunctionId(functionId, true);
+    List<MergedAnomalyResultDTO> mergedAnomalies = mergedAnomalyResultDAO.findByFunctionId(functionId);
 
     for (MergedAnomalyResultDTO mergedAnomaly : mergedAnomalies) {
       AnomalyFeedback feedback = mergedAnomaly.getFeedback();
@@ -1006,7 +1000,7 @@ public class AnomalyResource {
       }
     } else if (anomalyType.equals("merged")) {
       List<MergedAnomalyResultDTO> mergedResults =
-          mergedAnomalyResultDAO.findByStartTimeInRangeAndFunctionId(startTime, endTime, functionId, true);
+          mergedAnomalyResultDAO.findByStartTimeInRangeAndFunctionId(startTime, endTime, functionId);
 
       // apply alert filter
       if (applyAlertFiler) {
@@ -1118,7 +1112,7 @@ public class AnomalyResource {
     }
 
     // merged anomaly mapping
-    List<MergedAnomalyResultDTO> mergedResults = anomalyMergedResultDAO.findByFunctionId(id, true);
+    List<MergedAnomalyResultDTO> mergedResults = anomalyMergedResultDAO.findByFunctionId(id);
     for (MergedAnomalyResultDTO result : mergedResults) {
       anomalyMergedResultDAO.delete(result);
     }
@@ -1211,7 +1205,7 @@ public class AnomalyResource {
       @QueryParam("start") long viewWindowStartTime, @QueryParam("end") long viewWindowEndTime) throws Exception {
     LOG.warn("Call to a deprecated end point /dashboard/anomaly-merged-result/timeseries/{anomaly_merged_result_id}" + getClass().getName());
     boolean loadRawAnomalies = false;
-    MergedAnomalyResultDTO anomalyResult = anomalyMergedResultDAO.findById(anomalyResultId, loadRawAnomalies);
+    MergedAnomalyResultDTO anomalyResult = anomalyMergedResultDAO.findById(anomalyResultId);
     Map<String, String> anomalyProps = anomalyResult.getProperties();
 
     AnomalyTimelinesView anomalyTimelinesView = null;
@@ -1265,7 +1259,7 @@ public class AnomalyResource {
       anomalyDetectionInputContextBuilder.setFunction(anomalyFunctionSpec)
           .fetchTimeSeriesDataByDimension(viewWindowStart, viewWindowEnd, dimensions, false)
           .fetchScalingFactors(viewWindowStart, viewWindowEnd)
-          .fetchExistingMergedAnomalies(viewWindowStart, viewWindowEnd, false);
+          .fetchExistingMergedAnomalies(viewWindowStart, viewWindowEnd);
 
       AnomalyDetectionInputContext adInputContext = anomalyDetectionInputContextBuilder.build();
 

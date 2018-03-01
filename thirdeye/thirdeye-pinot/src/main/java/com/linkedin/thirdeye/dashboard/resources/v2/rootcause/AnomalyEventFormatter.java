@@ -53,7 +53,7 @@ public class AnomalyEventFormatter extends RootCauseEventEntityFormatter {
   public RootCauseEventEntity format(EventEntity entity) {
     AnomalyEventEntity e = (AnomalyEventEntity) entity;
 
-    MergedAnomalyResultDTO dto = this.anomalyDAO.findById(e.getId(), false);
+    MergedAnomalyResultDTO dto = this.anomalyDAO.findById(e.getId());
     AnomalyFunctionDTO func = dto.getFunction();
 
     String comment = "";
