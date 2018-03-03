@@ -33,7 +33,6 @@ public class MergedAnomalyResultBean extends AbstractBean implements Comparable<
 
   //TODO: deprecate raw anomaly list and message
   private String message;
-  private List<Long> rawAnomalyIdList;
 
 
   public Long getFunctionId() {
@@ -154,14 +153,6 @@ public class MergedAnomalyResultBean extends AbstractBean implements Comparable<
 
   public void setMessage(String message) {
     this.message = message;
-  }
-
-  public List<Long> getRawAnomalyIdList() {
-    return rawAnomalyIdList;
-  }
-
-  public void setRawAnomalyIdList(List<Long> rawAnomalyIdList) {
-    this.rawAnomalyIdList = rawAnomalyIdList;
   }
 
   public double getImpactToGlobal() {

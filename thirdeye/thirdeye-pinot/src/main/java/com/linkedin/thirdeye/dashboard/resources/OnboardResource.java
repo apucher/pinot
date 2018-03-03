@@ -294,7 +294,6 @@ public class OnboardResource {
     for (MergedAnomalyResultDTO mergedAnomalyResultDTO : mergedAnomalyResultDTOs) {
       long oldId = mergedAnomalyResultDTO.getId();
       mergedAnomalyResultDTO.setId(null);  // clean the Id, then will create a new Id when save
-      mergedAnomalyResultDTO.setRawAnomalyIdList(null);
       mergedAnomalyResultDTO.setFunctionId(destId);
       mergedAnomalyResultDTO.setFunction(destAnomalyFunction);
       long newId = mergedAnomalyResultDAO.save(mergedAnomalyResultDTO);

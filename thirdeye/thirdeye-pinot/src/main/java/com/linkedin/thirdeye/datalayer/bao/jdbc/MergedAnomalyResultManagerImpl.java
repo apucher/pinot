@@ -5,7 +5,6 @@ import com.linkedin.thirdeye.datalayer.bao.MergedAnomalyResultManager;
 import com.linkedin.thirdeye.datalayer.dto.AnomalyFeedbackDTO;
 import com.linkedin.thirdeye.datalayer.dto.AnomalyFunctionDTO;
 import com.linkedin.thirdeye.datalayer.dto.MergedAnomalyResultDTO;
-import com.linkedin.thirdeye.datalayer.dto.RawAnomalyResultDTO;
 import com.linkedin.thirdeye.datalayer.pojo.AnomalyFeedbackBean;
 import com.linkedin.thirdeye.datalayer.pojo.AnomalyFunctionBean;
 import com.linkedin.thirdeye.datalayer.pojo.MergedAnomalyResultBean;
@@ -377,14 +376,6 @@ public class MergedAnomalyResultManagerImpl extends AbstractManagerImpl<MergedAn
 
     if (entity.getFunction() != null) {
       bean.setFunctionId(entity.getFunction().getId());
-    }
-
-    if (entity.getAnomalyResults() != null && !entity.getAnomalyResults().isEmpty()) {
-      List<Long> rawAnomalyIds = new ArrayList<>();
-      for (RawAnomalyResultDTO rawAnomalyDTO : entity.getAnomalyResults()) {
-        rawAnomalyIds.add(rawAnomalyDTO.getId());
-      }
-      bean.setRawAnomalyIdList(rawAnomalyIds);
     }
     return bean;
   }
