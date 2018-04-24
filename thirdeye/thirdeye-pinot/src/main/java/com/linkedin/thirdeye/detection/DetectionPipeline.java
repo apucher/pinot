@@ -1,22 +1,24 @@
 package com.linkedin.thirdeye.detection;
 
 import com.google.common.collect.Multimap;
-import com.linkedin.thirdeye.dataframe.DataFrame;
+import com.linkedin.thirdeye.api.DimensionMap;
 import com.linkedin.thirdeye.dataframe.util.MetricSlice;
 import com.linkedin.thirdeye.datalayer.dto.DetectionConfigDTO;
-import com.linkedin.thirdeye.datalayer.dto.EventDTO;
 import com.linkedin.thirdeye.datalayer.dto.MergedAnomalyResultDTO;
-import java.util.Collection;
+import com.linkedin.thirdeye.datalayer.dto.MetricConfigDTO;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 
 public abstract class DetectionPipeline {
-  final DetectionConfigDTO config;
-  final long startTime;
-  final long endTime;
+  protected final DataProvider provider;
+  protected final DetectionConfigDTO config;
+  protected final long startTime;
+  protected final long endTime;
 
-  public DetectionPipeline(DetectionConfigDTO config, long startTime, long endTime) {
+  protected DetectionPipeline(DataProvider provider, DetectionConfigDTO config, long startTime, long endTime) {
+    this.provider = provider;
     this.config = config;
     this.startTime = startTime;
     this.endTime = endTime;
@@ -24,23 +26,30 @@ public abstract class DetectionPipeline {
 
   public abstract List<MergedAnomalyResultDTO> run();
 
-  final Map<MetricSlice, DataFrame> fetchTimeseries(Collection<MetricSlice> slices) {
-    throw new IllegalStateException("not implemented yet");
+  protected final MergedAnomalyResultDTO makeAnomaly(MetricSlice slice) {
+    Map<Long, MetricConfigDTO> metrics = this.provider.fetchMetrics(Collections.singleton(slice.getMetricId()));
+    if (!metrics.containsKey(slice.getMetricId())) {
+      throw new IllegalArgumentException(String.format("Could not resolve metric id %d", slice.getMetricId()));
+    }
+
+    MetricConfigDTO metric = metrics.get(slice.getMetricId());
+
+    MergedAnomalyResultDTO anomaly = new MergedAnomalyResultDTO();
+    anomaly.setStartTime(slice.getStart());
+    anomaly.setEndTime(slice.getEnd());
+    anomaly.setMetric(metric.getName());
+    anomaly.setCollection(metric.getDataset());
+    anomaly.setDimensions(toFilterMap(slice.getFilters()));
+
+    return anomaly;
   }
 
-  final Map<MetricSlice, DataFrame> fetchAggregates(Collection<MetricSlice> slices) {
-    throw new IllegalStateException("not implemented yet");
-  }
-
-  final Map<MetricSlice, DataFrame> fetchBreakdowns(Collection<MetricSlice> slices) {
-    throw new IllegalStateException("not implemented yet");
-  }
-
-  final Multimap<MetricSlice, MergedAnomalyResultDTO> fetchAnomalies(Collection<MetricSlice> slices) {
-    throw new IllegalStateException("not implemented yet");
-  }
-
-  final Multimap<MetricSlice, EventDTO> fetchEvents(Collection<EventSlice> slices) {
-    throw new IllegalStateException("not implemented yet");
+  // TODO anomaly should support multimap
+  private DimensionMap toFilterMap(Multimap<String, String> filters) {
+    DimensionMap map = new DimensionMap();
+    for (Map.Entry<String, String> entry : filters.entries()) {
+      map.put(entry.getKey(), entry.getValue());
+    }
+    return map;
   }
 }
