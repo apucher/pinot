@@ -1,6 +1,7 @@
 package com.linkedin.thirdeye.anomaly.task;
 
 import com.linkedin.thirdeye.anomaly.classification.ClassificationTaskInfo;
+import com.linkedin.thirdeye.detection.DetectionPipelineTaskInfo;
 import java.io.IOException;
 
 import org.slf4j.Logger;
@@ -28,6 +29,9 @@ public class TaskInfoFactory {
     TaskInfo taskInfo = null;
     try {
       switch(taskType) {
+        case DETECTION:
+          taskInfo = OBJECT_MAPPER.readValue(taskInfoString, DetectionPipelineTaskInfo.class);
+          break;
         case ANOMALY_DETECTION:
           taskInfo = OBJECT_MAPPER.readValue(taskInfoString, DetectionTaskInfo.class);
           break;

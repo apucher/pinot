@@ -349,3 +349,12 @@ create index rootcause_session_anomaly_range_end_idx on rootcause_session_index(
 create index rootcause_session_created_idx on rootcause_session_index(created);
 create index rootcause_session_updated_idx on rootcause_session_index(updated);
 create index rootcause_session_base_id_idx ON rootcause_session_index(base_id);
+
+create table if not exists detection_config_index (
+    base_id bigint(20) not null,
+    create_time timestamp,
+    update_time timestamp default current_timestamp,
+    version int(10)
+) ENGINE=InnoDB;
+create index detection_config_base_id_idx ON detection_config_index(base_id);
+

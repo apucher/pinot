@@ -20,6 +20,7 @@ import com.linkedin.thirdeye.datalayer.entity.ClassificationConfigIndex;
 import com.linkedin.thirdeye.datalayer.entity.ConfigIndex;
 import com.linkedin.thirdeye.datalayer.entity.DataCompletenessConfigIndex;
 import com.linkedin.thirdeye.datalayer.entity.DatasetConfigIndex;
+import com.linkedin.thirdeye.datalayer.entity.DetectionConfigIndex;
 import com.linkedin.thirdeye.datalayer.entity.DetectionStatusIndex;
 import com.linkedin.thirdeye.datalayer.entity.EntityToEntityMappingIndex;
 import com.linkedin.thirdeye.datalayer.entity.EventIndex;
@@ -44,6 +45,7 @@ import com.linkedin.thirdeye.datalayer.pojo.ClassificationConfigBean;
 import com.linkedin.thirdeye.datalayer.pojo.ConfigBean;
 import com.linkedin.thirdeye.datalayer.pojo.DataCompletenessConfigBean;
 import com.linkedin.thirdeye.datalayer.pojo.DatasetConfigBean;
+import com.linkedin.thirdeye.datalayer.pojo.DetectionConfigBean;
 import com.linkedin.thirdeye.datalayer.pojo.DetectionStatusBean;
 import com.linkedin.thirdeye.datalayer.pojo.EntityToEntityMappingBean;
 import com.linkedin.thirdeye.datalayer.pojo.EventBean;
@@ -133,6 +135,8 @@ public class GenericPojoDao {
         newPojoInfo(DEFAULT_BASE_TABLE_NAME, AlertSnapshotIndex.class));
     pojoInfoMap.put(RootcauseSessionBean.class,
         newPojoInfo(DEFAULT_BASE_TABLE_NAME, RootcauseSessionIndex.class));
+    pojoInfoMap.put(DetectionConfigBean.class,
+        newPojoInfo(DEFAULT_BASE_TABLE_NAME, DetectionConfigIndex.class));
   }
 
   private static PojoInfo newPojoInfo(String baseTableName,
