@@ -6,6 +6,7 @@ import com.linkedin.thirdeye.anomaly.classification.ClassificationTaskRunner;
 import com.linkedin.thirdeye.anomaly.monitor.MonitorTaskRunner;
 import com.linkedin.thirdeye.anomaly.task.TaskConstants.TaskType;
 import com.linkedin.thirdeye.completeness.checker.DataCompletenessTaskRunner;
+import com.linkedin.thirdeye.detection.DetectionPipelineTaskRunner;
 
 
 /**
@@ -16,6 +17,9 @@ public class TaskRunnerFactory {
   public static TaskRunner getTaskRunnerFromTaskType(TaskType taskType) {
     TaskRunner taskRunner = null;
     switch (taskType) {
+      case DETECTION:
+        taskRunner = new DetectionPipelineTaskRunner();
+        break;
       case ANOMALY_DETECTION:
         taskRunner = new DetectionTaskRunner();
         break;
