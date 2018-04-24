@@ -1,6 +1,7 @@
 package com.linkedin.thirdeye.datalayer.pojo;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import java.util.Map;
 import java.util.Objects;
 
 
@@ -15,6 +16,7 @@ import java.util.Objects;
 public class DetectionConfigBean extends AbstractBean {
   String className;
   String cron;
+  Map<String, Object> properties;
 
   public String getClassName() {
     return className;
@@ -30,5 +32,13 @@ public class DetectionConfigBean extends AbstractBean {
 
   public void setCron(String cron) {
     this.cron = cron;
+  }
+
+  public Map<String, Object> getProperties() {
+    return properties;
+  }
+
+  public void setProperties(Map<String, Object> properties) {
+    this.properties = properties;
   }
 }

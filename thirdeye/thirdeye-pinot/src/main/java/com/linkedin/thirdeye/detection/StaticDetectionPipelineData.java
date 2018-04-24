@@ -14,11 +14,11 @@ public class StaticDetectionPipelineData {
   final Map<MetricSlice, DataFrame> aggregates;
   final Map<MetricSlice, DataFrame> breakdowns;
   final Multimap<MetricSlice, MergedAnomalyResultDTO> anomalies;
-  final Multimap<MetricSlice, EventDTO> events;
+  final Multimap<EventSlice, EventDTO> events;
 
   public StaticDetectionPipelineData(StaticDetectionPipelineModel model, Map<MetricSlice, DataFrame> timeseries,
       Map<MetricSlice, DataFrame> aggregates, Map<MetricSlice, DataFrame> breakdowns,
-      Multimap<MetricSlice, MergedAnomalyResultDTO> anomalies, Multimap<MetricSlice, EventDTO> events) {
+      Multimap<MetricSlice, MergedAnomalyResultDTO> anomalies, Multimap<EventSlice, EventDTO> events) {
     this.model = model;
     this.timeseries = timeseries;
     this.aggregates = aggregates;
@@ -47,7 +47,7 @@ public class StaticDetectionPipelineData {
     return anomalies;
   }
 
-  public Multimap<MetricSlice, EventDTO> getEvents() {
+  public Multimap<EventSlice, EventDTO> getEvents() {
     return events;
   }
 }

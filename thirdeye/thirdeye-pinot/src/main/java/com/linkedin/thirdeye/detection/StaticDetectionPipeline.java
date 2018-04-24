@@ -11,8 +11,8 @@ import java.util.Map;
 
 
 public abstract class StaticDetectionPipeline extends DetectionPipeline {
-  public StaticDetectionPipeline(DetectionConfigDTO config, long startTime, long endTime) {
-    super(config, startTime, endTime);
+  protected StaticDetectionPipeline(DataProvider provider, DetectionConfigDTO config, long startTime, long endTime) {
+    super(provider, config, startTime, endTime);
   }
 
   public abstract StaticDetectionPipelineModel getModel();
@@ -22,11 +22,11 @@ public abstract class StaticDetectionPipeline extends DetectionPipeline {
   @Override
   public final List<MergedAnomalyResultDTO> run() {
     StaticDetectionPipelineModel model = this.getModel();
-    Map<MetricSlice, DataFrame> timeseries = this.fetchTimeseries(model.timeseriesSlices);
-    Map<MetricSlice, DataFrame> aggregates = this.fetchAggregates(model.aggregateSlices);
-    Map<MetricSlice, DataFrame> breakdowns = this.fetchBreakdowns(model.breakdownSlices);
-    Multimap<MetricSlice, MergedAnomalyResultDTO> anomalies = this.fetchAnomalies(model.anomalySlices);
-    Multimap<MetricSlice, EventDTO> events = this.fetchEvents(model.eventSlices);
+    Map<MetricSlice, DataFrame> timeseries = this.provider.fetchTimeseries(model.timeseriesSlices);
+    Map<MetricSlice, DataFrame> aggregates = this.provider.fetchAggregates(model.aggregateSlices);
+    Map<MetricSlice, DataFrame> breakdowns = this.provider.fetchBreakdowns(model.breakdownSlices);
+    Multimap<MetricSlice, MergedAnomalyResultDTO> anomalies = this.provider.fetchAnomalies(model.anomalySlices);
+    Multimap<EventSlice, EventDTO> events = this.provider.fetchEvents(model.eventSlices);
 
     StaticDetectionPipelineData data = new StaticDetectionPipelineData(
         model, timeseries, aggregates, breakdowns, anomalies, events);
