@@ -5,6 +5,7 @@ import com.linkedin.thirdeye.dataframe.util.MetricSlice;
 import com.linkedin.thirdeye.datalayer.dto.DetectionConfigDTO;
 import com.linkedin.thirdeye.datalayer.dto.MergedAnomalyResultDTO;
 import com.linkedin.thirdeye.datalayer.dto.MetricConfigDTO;
+import com.linkedin.thirdeye.detection.DetectionPipelineResult;
 import com.linkedin.thirdeye.detection.StaticDetectionPipeline;
 import com.linkedin.thirdeye.detection.TestDataProvider;
 import com.linkedin.thirdeye.detection.DataProvider;
@@ -50,7 +51,9 @@ public class ThresholdAlgorithmTest {
 
   @Test
   public void testThresholdAlgorithmRun() {
-    List<MergedAnomalyResultDTO> anomalies = thresholdAlgorithm.run();
+    DetectionPipelineResult result = thresholdAlgorithm.run();
+    List<MergedAnomalyResultDTO> anomalies = result.getAnomalies();
+    Assert.assertEquals(result.getLastTimestamp(), 4);
     Assert.assertEquals(anomalies.size(), 2);
     Assert.assertEquals(anomalies.get(0).getStartTime(), 0);
     Assert.assertEquals(anomalies.get(0).getEndTime(), 1);
