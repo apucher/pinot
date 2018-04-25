@@ -59,4 +59,23 @@ public class DetectionConfigBean extends AbstractBean {
   public void setLastTimestamp(long lastTimestamp) {
     this.lastTimestamp = lastTimestamp;
   }
+  
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    DetectionConfigBean that = (DetectionConfigBean) o;
+    return Objects.equals(className, that.className) && Objects.equals(cron, that.cron) && Objects.equals(name,
+        that.name) && Objects.equals(properties, that.properties);
+  }
+
+  @Override
+  public int hashCode() {
+
+    return Objects.hash(className, cron, name, properties);
+  }
 }
