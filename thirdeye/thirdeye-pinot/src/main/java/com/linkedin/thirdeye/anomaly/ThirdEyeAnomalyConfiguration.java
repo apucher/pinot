@@ -18,6 +18,7 @@ public class ThirdEyeAnomalyConfiguration extends ThirdEyeConfiguration {
   private boolean pinotProxy = false;
   private boolean scheduler = false;
   private boolean worker = false;
+  private boolean detectionPipeline = false;
 
   private long id;
   private String dashboardHost;
@@ -36,6 +37,14 @@ public class ThirdEyeAnomalyConfiguration extends ThirdEyeConfiguration {
 
   public void setHolidayEventsLoaderConfiguration(HolidayEventsLoaderConfiguration holidayEventsLoaderConfiguration) {
     this.holidayEventsLoaderConfiguration = holidayEventsLoaderConfiguration;
+  }
+
+  public boolean isDetectionPipeline() {
+    return detectionPipeline;
+  }
+
+  public void setDetectionPipeline(boolean detectionPipeline) {
+    this.detectionPipeline = detectionPipeline;
   }
 
   public boolean isHolidayEventsLoader() {

@@ -8,6 +8,16 @@ public class DetectionPipelineTaskInfo implements TaskInfo {
   long start;
   long end;
 
+  public DetectionPipelineTaskInfo(long configId, long start, long end) {
+    this.configId = configId;
+    this.start = start;
+    this.end = end;
+  }
+
+  public DetectionPipelineTaskInfo(){
+    // dummy constructor for deserialization
+  }
+
   public long getConfigId() {
     return configId;
   }

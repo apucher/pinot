@@ -9,6 +9,7 @@ import com.linkedin.thirdeye.anomaly.monitor.MonitorJobScheduler;
 import com.linkedin.thirdeye.anomaly.onboard.DetectionOnboardResource;
 import com.linkedin.thirdeye.anomaly.onboard.DetectionOnboardServiceExecutor;
 import com.linkedin.thirdeye.anomaly.task.TaskDriver;
+import com.linkedin.thirdeye.detection.DetectionPipelineScheduler;
 import com.linkedin.thirdeye.tracking.RequestStatisticsLogger;
 import com.linkedin.thirdeye.anomalydetection.alertFilterAutotune.AlertFilterAutotuneFactory;
 import com.linkedin.thirdeye.api.TimeGranularity;
@@ -53,6 +54,7 @@ public class ThirdEyeAnomalyApplication
   private EmailResource emailResource = null;
   private HolidayEventsLoader holidayEventsLoader = null;
   private RequestStatisticsLogger requestStatisticsLogger = null;
+  private DetectionPipelineScheduler detectionPipelineScheduler = null;
 
   public static void main(final String[] args) throws Exception {
 
@@ -156,6 +158,10 @@ public class ThirdEyeAnomalyApplication
           detectionOnboardServiceExecutor = new DetectionOnboardServiceExecutor();
           detectionOnboardServiceExecutor.start();
           environment.jersey().register(new DetectionOnboardResource(detectionOnboardServiceExecutor, systemConfig));
+        }
+        if (config.isDetectionPipeline()) {
+          detectionPipelineScheduler = new DetectionPipelineScheduler(DAORegistry.getInstance().getDetectionConfigManager());
+          detectionPipelineScheduler.start();
         }
       }
 
