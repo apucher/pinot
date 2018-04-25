@@ -1,6 +1,7 @@
 package com.linkedin.thirdeye.detection;
 
 import com.linkedin.thirdeye.datalayer.dto.DetectionConfigDTO;
+import com.linkedin.thirdeye.datalayer.dto.MergedAnomalyResultDTO;
 import java.util.Collections;
 import java.util.Objects;
 
@@ -12,7 +13,7 @@ public class MockDetectionPipeline extends DetectionPipeline {
 
   @Override
   public DetectionPipelineResult run() throws Exception {
-    return new DetectionPipelineResult(Collections.emptyList(), -1);
+    return new DetectionPipelineResult(Collections.<MergedAnomalyResultDTO>emptyList(), -1);
   }
 
   @Override
