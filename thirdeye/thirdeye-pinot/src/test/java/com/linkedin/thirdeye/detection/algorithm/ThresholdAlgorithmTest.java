@@ -1,6 +1,5 @@
-package com.linkedin.thirdeye.detection.algorithms;
+package com.linkedin.thirdeye.detection.algorithm;
 
-import com.google.common.collect.Multimap;
 import com.linkedin.thirdeye.dataframe.DataFrame;
 import com.linkedin.thirdeye.dataframe.util.MetricSlice;
 import com.linkedin.thirdeye.datalayer.dto.DetectionConfigDTO;
