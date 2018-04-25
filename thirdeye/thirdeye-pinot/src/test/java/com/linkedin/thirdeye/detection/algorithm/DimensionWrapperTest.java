@@ -1,10 +1,7 @@
 package com.linkedin.thirdeye.detection.algorithm;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
 import com.linkedin.thirdeye.dataframe.DataFrame;
 import com.linkedin.thirdeye.dataframe.DoubleSeries;
-import com.linkedin.thirdeye.dataframe.LongSeries;
 import com.linkedin.thirdeye.dataframe.StringSeries;
 import com.linkedin.thirdeye.dataframe.util.MetricSlice;
 import com.linkedin.thirdeye.datalayer.dto.DetectionConfigDTO;
@@ -22,8 +19,7 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import static com.linkedin.thirdeye.dashboard.resources.v2.aggregation.AggregationLoader.*;
-import static com.linkedin.thirdeye.dataframe.util.DataFrameUtils.COL_VALUE;
+import static com.linkedin.thirdeye.dataframe.util.DataFrameUtils.*;
 
 public class DimensionWrapperTest {
   // exploration
@@ -94,23 +90,59 @@ public class DimensionWrapperTest {
   }
 
   @Test
-  public void testMultiDimension() {
+  public void testMultiDimension() throws Exception {
+    this.properties.put(PROP_DIMENSIONS, Arrays.asList("a", "b"));
 
+    this.wrapper = new DimensionWrapper(this.provider, this.config, 10, 15);
+    this.wrapper.run();
+
+    Assert.assertEquals(this.runs.size(), 6);
+    assertEquals(this.runs.get(0), makePipeline("thirdeye:metric:1:a%3D1:b%3D1"));
+    assertEquals(this.runs.get(1), makePipeline("thirdeye:metric:1:a%3D1:b%3D2"));
+    assertEquals(this.runs.get(2), makePipeline("thirdeye:metric:1:a%3D1:b%3D3"));
+    assertEquals(this.runs.get(3), makePipeline("thirdeye:metric:1:a%3D2:b%3D1"));
+    assertEquals(this.runs.get(4), makePipeline("thirdeye:metric:1:a%3D2:b%3D2"));
+    assertEquals(this.runs.get(5), makePipeline("thirdeye:metric:1:a%3D2:b%3D3"));
   }
 
   @Test
-  public void testMinValue() {
+  public void testMinValue() throws Exception {
+    this.properties.put(PROP_DIMENSIONS, Collections.singleton("b"));
+    this.properties.put(PROP_MIN_VALUE, 16.0d);
 
+    this.wrapper = new DimensionWrapper(this.provider, this.config, 10, 15);
+    this.wrapper.run();
+
+    Assert.assertEquals(this.runs.size(), 2);
+    assertEquals(this.runs.get(0), makePipeline("thirdeye:metric:1:b%3D1"));
+    assertEquals(this.runs.get(1), makePipeline("thirdeye:metric:1:b%3D2"));
   }
 
   @Test
-  public void testMinContribution() {
+  public void testMinContribution() throws Exception {
+    this.properties.put(PROP_DIMENSIONS, Collections.singleton("b"));
+    this.properties.put(PROP_MIN_CONTRIBUTION, 0.40d);
 
+    this.wrapper = new DimensionWrapper(this.provider, this.config, 10, 15);
+    this.wrapper.run();
+
+    Assert.assertEquals(this.runs.size(), 1);
+    assertEquals(this.runs.get(0), makePipeline("thirdeye:metric:1:b%3D2"));
   }
 
   @Test
-  public void testTopK() {
+  public void testTopK() throws Exception {
+    this.properties.put(PROP_DIMENSIONS, Arrays.asList("a", "b"));
+    this.properties.put(PROP_K, 4);
 
+    this.wrapper = new DimensionWrapper(this.provider, this.config, 10, 15);
+    this.wrapper.run();
+
+    Assert.assertEquals(this.runs.size(), 4);
+    assertEquals(this.runs.get(0), makePipeline("thirdeye:metric:1:a%3D2:b%3D2"));
+    assertEquals(this.runs.get(1), makePipeline("thirdeye:metric:1:a%3D2:b%3D1"));
+    assertEquals(this.runs.get(2), makePipeline("thirdeye:metric:1:a%3D2:b%3D3"));
+    assertEquals(this.runs.get(3), makePipeline("thirdeye:metric:1:a%3D1:b%3D2"));
   }
 
   private DetectionConfigDTO makeConfig(String metricUrn) {
