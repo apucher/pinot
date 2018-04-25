@@ -1,14 +1,22 @@
 package com.linkedin.thirdeye.detection;
 
-import scala.collection.mutable.MultiMap;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
+import com.linkedin.thirdeye.datalayer.dto.EventDTO;
 
 
 class EventSlice {
   final long start;
   final long end;
-  final MultiMap<String, String> filters;
+  final Multimap<String, String> filters;
 
-  public EventSlice(long start, long end, MultiMap<String, String> filters) {
+  public EventSlice() {
+    this.start = -1;
+    this.end = -1;
+    this.filters = ArrayListMultimap.create();
+  }
+
+  public EventSlice(long start, long end, Multimap<String, String> filters) {
     this.start = start;
     this.end = end;
     this.filters = filters;
@@ -22,7 +30,39 @@ class EventSlice {
     return end;
   }
 
-  public MultiMap<String, String> getFilters() {
+  public Multimap<String, String> getFilters() {
     return filters;
+  }
+
+  public EventSlice withStart(long start) {
+    return new EventSlice(start, this.end, this.filters);
+  }
+
+  public EventSlice withEnd(long end) {
+    return new EventSlice(this.start, end, this.filters);
+  }
+
+  public EventSlice withFilters(Multimap<String, String> filters) {
+    return new EventSlice(this.start, this.end, filters);
+  }
+
+  public boolean match(EventDTO event) {
+    if (this.start >= 0 && event.getEndTime() < this.start)
+      return false;
+    if (this.end >= 0 && event.getStartTime() > this.end)
+      return false;
+
+    for (String dimName : this.filters.keySet()) {
+      if (event.getTargetDimensionMap().containsKey(dimName)) {
+        boolean anyMatch = false;
+        for (String dimValue : event.getTargetDimensionMap().get(dimName)) {
+          anyMatch |= this.filters.get(dimName).contains(dimValue);
+        }
+        if (!anyMatch)
+          return false;
+      }
+    }
+
+    return true;
   }
 }
