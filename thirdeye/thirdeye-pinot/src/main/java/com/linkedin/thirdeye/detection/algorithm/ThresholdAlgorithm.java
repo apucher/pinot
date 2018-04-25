@@ -7,6 +7,7 @@ import com.linkedin.thirdeye.dataframe.util.MetricSlice;
 import com.linkedin.thirdeye.datalayer.dto.DetectionConfigDTO;
 import com.linkedin.thirdeye.datalayer.dto.MergedAnomalyResultDTO;
 import com.linkedin.thirdeye.detection.DataProvider;
+import com.linkedin.thirdeye.detection.DetectionPipelineResult;
 import com.linkedin.thirdeye.detection.StaticDetectionPipeline;
 import com.linkedin.thirdeye.detection.StaticDetectionPipelineData;
 import com.linkedin.thirdeye.detection.StaticDetectionPipelineModel;
@@ -54,7 +55,7 @@ public class ThresholdAlgorithm extends StaticDetectionPipeline {
   }
 
   @Override
-  public List<MergedAnomalyResultDTO> run(StaticDetectionPipelineData data) {
+  public DetectionPipelineResult run(StaticDetectionPipelineData data) {
     DataFrame df = data.getTimeseries().get(this.slice);
 
     df.addSeries(COL_TOO_HIGH, BooleanSeries.fillValues(df.size(), false));
@@ -90,13 +91,15 @@ public class ThresholdAlgorithm extends StaticDetectionPipeline {
       }
     }
 
-    return anomalies;
+    long maxTime = df.getLongs(COL_TIME).max().longValue();
+
+    return new DetectionPipelineResult(anomalies, maxTime);
   }
 
   private long getEndTime(DataFrame df, int index) {
     if (index < df.size() - 1) {
       return df.getLong(COL_TIME, index + 1);
     }
-    return this.endTime;
+    return df.getLongs(COL_TIME).max().longValue() + 1; // TODO use time granularity
   }
 }

@@ -17,10 +17,10 @@ public abstract class StaticDetectionPipeline extends DetectionPipeline {
 
   public abstract StaticDetectionPipelineModel getModel();
 
-  public abstract List<MergedAnomalyResultDTO> run(StaticDetectionPipelineData data);
+  public abstract DetectionPipelineResult run(StaticDetectionPipelineData data);
 
   @Override
-  public final List<MergedAnomalyResultDTO> run() {
+  public final DetectionPipelineResult run() {
     StaticDetectionPipelineModel model = this.getModel();
     Map<MetricSlice, DataFrame> timeseries = this.provider.fetchTimeseries(model.timeseriesSlices);
     Map<MetricSlice, DataFrame> aggregates = this.provider.fetchAggregates(model.aggregateSlices);

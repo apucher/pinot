@@ -24,7 +24,7 @@ public abstract class DetectionPipeline {
     this.endTime = endTime;
   }
 
-  public abstract List<MergedAnomalyResultDTO> run();
+  public abstract DetectionPipelineResult run();
 
   protected final MergedAnomalyResultDTO makeAnomaly(MetricSlice slice) {
     Map<Long, MetricConfigDTO> metrics = this.provider.fetchMetrics(Collections.singleton(slice.getMetricId()));
