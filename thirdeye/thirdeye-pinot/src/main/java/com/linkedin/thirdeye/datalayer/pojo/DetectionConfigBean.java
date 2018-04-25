@@ -17,6 +17,7 @@ public class DetectionConfigBean extends AbstractBean {
   String className;
   String cron;
   String name;
+  long lastTimestamp;
   Map<String, Object> properties;
 
   public String getName() {
@@ -49,5 +50,13 @@ public class DetectionConfigBean extends AbstractBean {
 
   public void setProperties(Map<String, Object> properties) {
     this.properties = properties;
+  }
+
+  public long getLastTimestamp() {
+    return lastTimestamp;
+  }
+
+  public void setLastTimestamp(long lastTimestamp) {
+    this.lastTimestamp = lastTimestamp;
   }
 }

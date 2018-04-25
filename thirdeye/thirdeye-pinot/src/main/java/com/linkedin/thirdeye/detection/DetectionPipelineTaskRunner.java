@@ -47,7 +47,7 @@ public class DetectionPipelineTaskRunner implements TaskRunner {
 
   private final DataProvider provider = new DefaultDataProvider(
       this.metricDAO, this.eventDAO, this.anomalyDAO, this.timeseriesLoader, this.aggregationLoader);
-  
+
   @Override
   public List<TaskResult> execute(TaskInfo taskInfo, TaskContext taskContext) throws Exception {
     DetectionPipelineTaskInfo info = (DetectionPipelineTaskInfo) taskInfo;
@@ -58,7 +58,10 @@ public class DetectionPipelineTaskRunner implements TaskRunner {
     }
 
     DetectionPipeline pipeline = DetectionPipelineLoader.from(this.provider, config, info.start, info.end);
-    pipeline.run();
+    DetectionPipelineResult result = pipeline.run();
+
+    config.setLastTimestamp(result.getLastTimestamp());
+    detectionDAO.update(config);
 
     return Collections.emptyList();
   }
