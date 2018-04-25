@@ -21,6 +21,9 @@ import java.util.List;
 
 
 public class DetectionPipelineTaskRunner implements TaskRunner {
+  private final DetectionPipelineLoader loader =
+      new DetectionPipelineLoader();
+
   private final DetectionConfigManager detectionDAO =
       DAORegistry.getInstance().getDetectionConfigManager();
 
@@ -46,8 +49,8 @@ public class DetectionPipelineTaskRunner implements TaskRunner {
           ThirdEyeCacheRegistry.getInstance().getDatasetMaxDataTimeCache());
 
   private final DataProvider provider = new DefaultDataProvider(
-      this.metricDAO, this.eventDAO, this.anomalyDAO, this.timeseriesLoader, this.aggregationLoader);
-  
+      this.metricDAO, this.eventDAO, this.anomalyDAO, this.timeseriesLoader, this.aggregationLoader, this.loader);
+
   @Override
   public List<TaskResult> execute(TaskInfo taskInfo, TaskContext taskContext) throws Exception {
     DetectionPipelineTaskInfo info = (DetectionPipelineTaskInfo) taskInfo;
@@ -57,8 +60,10 @@ public class DetectionPipelineTaskRunner implements TaskRunner {
       throw new IllegalArgumentException(String.format("Could not resolve config id %d", info.configId));
     }
 
-    DetectionPipeline pipeline = DetectionPipelineLoader.from(this.provider, config, info.start, info.end);
+    DetectionPipeline pipeline = this.loader.from(this.provider, config, info.start, info.end);
     pipeline.run();
+
+    // TODO process results
 
     return Collections.emptyList();
   }

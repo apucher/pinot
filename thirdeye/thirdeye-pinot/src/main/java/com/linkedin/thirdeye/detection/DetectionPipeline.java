@@ -7,8 +7,8 @@ import com.linkedin.thirdeye.datalayer.dto.DetectionConfigDTO;
 import com.linkedin.thirdeye.datalayer.dto.MergedAnomalyResultDTO;
 import com.linkedin.thirdeye.datalayer.dto.MetricConfigDTO;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 
 public abstract class DetectionPipeline {
@@ -24,7 +24,7 @@ public abstract class DetectionPipeline {
     this.endTime = endTime;
   }
 
-  public abstract DetectionPipelineResult run();
+  public abstract DetectionPipelineResult run() throws Exception;
 
   protected final MergedAnomalyResultDTO makeAnomaly(MetricSlice slice) {
     Map<Long, MetricConfigDTO> metrics = this.provider.fetchMetrics(Collections.singleton(slice.getMetricId()));
