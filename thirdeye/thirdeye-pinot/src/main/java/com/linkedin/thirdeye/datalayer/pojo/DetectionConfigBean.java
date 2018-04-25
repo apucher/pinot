@@ -16,7 +16,16 @@ import java.util.Objects;
 public class DetectionConfigBean extends AbstractBean {
   String className;
   String cron;
+  String name;
   Map<String, Object> properties;
+
+  public String getName() {
+    return name;
+  }
+
+  public void setName(String name) {
+    this.name = name;
+  }
 
   public String getClassName() {
     return className;

@@ -40,6 +40,7 @@ public abstract class DetectionPipeline {
     anomaly.setMetric(metric.getName());
     anomaly.setCollection(metric.getDataset());
     anomaly.setDimensions(toFilterMap(slice.getFilters()));
+    anomaly.setDetectionConfigId(this.config.getId());
 
     return anomaly;
   }

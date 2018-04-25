@@ -1,4 +1,4 @@
-package com.linkedin.thirdeye.detection.algorithms;
+package com.linkedin.thirdeye.detection.algorithm;
 
 import com.linkedin.thirdeye.dataframe.BooleanSeries;
 import com.linkedin.thirdeye.dataframe.DataFrame;
