@@ -1,6 +1,9 @@
 package com.linkedin.thirdeye.detection;
 
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
+import com.linkedin.thirdeye.anomaly.events.EventFilter;
+import com.linkedin.thirdeye.anomaly.events.EventType;
 import com.linkedin.thirdeye.dashboard.resources.v2.aggregation.AggregationLoader;
 import com.linkedin.thirdeye.dashboard.resources.v2.timeseries.DefaultTimeSeriesLoader;
 import com.linkedin.thirdeye.dashboard.resources.v2.timeseries.TimeSeriesLoader;
@@ -13,9 +16,15 @@ import com.linkedin.thirdeye.datalayer.dto.DetectionConfigDTO;
 import com.linkedin.thirdeye.datalayer.dto.EventDTO;
 import com.linkedin.thirdeye.datalayer.dto.MergedAnomalyResultDTO;
 import com.linkedin.thirdeye.datalayer.dto.MetricConfigDTO;
+import com.linkedin.thirdeye.datalayer.util.Predicate;
 import com.linkedin.thirdeye.datasource.DAORegistry;
 import com.linkedin.thirdeye.rootcause.Pipeline;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -55,21 +64,65 @@ public class DefaultDataProvider implements DataProvider {
 
   @Override
   public Multimap<AnomalySlice, MergedAnomalyResultDTO> fetchAnomalies(Collection<AnomalySlice> slices) {
-    throw new IllegalStateException("not implemented yet");
+    Multimap<AnomalySlice, MergedAnomalyResultDTO> output = ArrayListMultimap.create();
+    for (AnomalySlice slice : slices) {
+      List<Predicate> predicates = new ArrayList<>();
+      if (slice.start >= 0)
+        predicates.add(Predicate.EQ("startTime", slice.start));
+      if (slice.end >= 0)
+        predicates.add(Predicate.EQ("endTime", slice.end));
+      if (slice.configId >= 0)
+        predicates.add(Predicate.EQ("detectionConfigId", slice.configId));
+
+      List<MergedAnomalyResultDTO> anomalies = this.anomalyDAO.findByPredicate(AND(predicates));
+      Iterator<MergedAnomalyResultDTO> itAnomaly = anomalies.iterator();
+      while (itAnomaly.hasNext()) {
+        if (!slice.match(itAnomaly.next()))
+          itAnomaly.remove();
+      }
+    }
+    return output;
   }
 
   @Override
   public Multimap<EventSlice, EventDTO> fetchEvents(Collection<EventSlice> slices) {
-    throw new IllegalStateException("not implemented yet");
+    Multimap<EventSlice, EventDTO> output = ArrayListMultimap.create();
+    for (EventSlice slice : slices) {
+      List<Predicate> predicates = new ArrayList<>();
+      if (slice.start >= 0)
+        predicates.add(Predicate.EQ("startTime", slice.start));
+      if (slice.end >= 0)
+        predicates.add(Predicate.EQ("endTime", slice.end));
+
+      List<EventDTO> events = this.eventDAO.findByPredicate(AND(predicates));
+      Iterator<EventDTO> itEvent = events.iterator();
+      while (itEvent.hasNext()) {
+        if (!slice.match(itEvent.next()))
+          itEvent.remove();
+      }
+
+      output.putAll(slice, events);
+    }
+    return output;
   }
 
   @Override
   public Map<Long, MetricConfigDTO> fetchMetrics(Collection<Long> ids) {
-    throw new IllegalStateException("not implemented yet");
+    List<MetricConfigDTO> metrics = this.metricDAO.findByPredicate(Predicate.IN("baseId", ids.toArray()));
+
+    Map<Long, MetricConfigDTO> output = new HashMap<>();
+    for (MetricConfigDTO metric : metrics) {
+      output.put(metric.getId(), metric);
+    }
+    return output;
   }
 
   @Override
   public DetectionPipeline loadPipeline(DetectionConfigDTO config, long start, long end) throws Exception {
     return this.loader.from(this, config, start, end);
+  }
+
+  private static Predicate AND(Collection<Predicate> predicates) {
+    return Predicate.AND(predicates.toArray(new Predicate[predicates.size()]));
   }
 }
