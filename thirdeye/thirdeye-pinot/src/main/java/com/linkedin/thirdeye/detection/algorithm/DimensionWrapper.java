@@ -10,21 +10,17 @@ import com.linkedin.thirdeye.datalayer.dto.DetectionConfigDTO;
 import com.linkedin.thirdeye.datalayer.dto.MergedAnomalyResultDTO;
 import com.linkedin.thirdeye.detection.DataProvider;
 import com.linkedin.thirdeye.detection.DetectionPipeline;
-import com.linkedin.thirdeye.detection.DetectionPipelineLoader;
 import com.linkedin.thirdeye.detection.DetectionPipelineResult;
 import com.linkedin.thirdeye.rootcause.impl.MetricEntity;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import org.apache.commons.collections.MapUtils;
 
-import static com.linkedin.thirdeye.dashboard.resources.v2.aggregation.AggregationLoader.*;
-import static com.linkedin.thirdeye.dataframe.util.DataFrameUtils.COL_VALUE;
+import static com.linkedin.thirdeye.dataframe.util.DataFrameUtils.*;
 
 
 public class DimensionWrapper extends DetectionPipeline {
@@ -52,7 +48,7 @@ public class DimensionWrapper extends DetectionPipeline {
   private static final String PROP_TARGET_DEFAULT = "metricUrn";
 
   private final String metricUrn;
-  private final Set<String> dimensions;
+  private final List<String> dimensions;
   private final int k;
   private final double minValue;
   private final double minContribution;
@@ -69,7 +65,7 @@ public class DimensionWrapper extends DetectionPipeline {
     Preconditions.checkArgument(config.getProperties().containsKey(PROP_DIMENSIONS), "Missing " + PROP_DIMENSIONS);
 
     this.metricUrn = MapUtils.getString(config.getProperties(), PROP_METRIC_URN);
-    this.dimensions = new HashSet<>((Collection<String>) config.getProperties().get(PROP_DIMENSIONS));
+    this.dimensions = new ArrayList<>((Collection<String>) config.getProperties().get(PROP_DIMENSIONS));
     this.minValue = MapUtils.getDoubleValue(config.getProperties(), PROP_MIN_VALUE, PROP_MIN_VALUE_DEFAULT);
     this.minContribution = MapUtils.getDoubleValue(config.getProperties(), PROP_MIN_CONTRIBUTION, PROP_MIN_CONTRIBUTION_DEFAULT);
     this.k = MapUtils.getIntValue(config.getProperties(), PROP_K, PROP_K_DEFAULT);
@@ -88,7 +84,7 @@ public class DimensionWrapper extends DetectionPipeline {
     MetricEntity metric = MetricEntity.fromURN(this.metricUrn, 1.0);
     MetricSlice slice = MetricSlice.from(metric.getId(), this.startTime, this.endTime, metric.getFilters());
 
-    DataFrame breakdown = this.provider.fetchBreakdowns(Collections.singletonList(slice), this.dimensions).get(slice);
+    DataFrame breakdown = this.provider.fetchAggregates(Collections.singletonList(slice), this.dimensions).get(slice);
 
     if (breakdown.isEmpty()) {
       return new DetectionPipelineResult(Collections.<MergedAnomalyResultDTO>emptyList(), -1);

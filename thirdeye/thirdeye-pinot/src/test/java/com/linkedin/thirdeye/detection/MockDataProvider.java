@@ -14,7 +14,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 import static com.linkedin.thirdeye.dashboard.resources.v2.aggregation.AggregationLoader.*;
 
@@ -54,16 +53,7 @@ public class MockDataProvider implements DataProvider {
   }
 
   @Override
-  public Map<MetricSlice, DataFrame> fetchAggregates(Collection<MetricSlice> slices) {
-    Map<MetricSlice, DataFrame> result = new HashMap<>();
-    for (MetricSlice slice : slices) {
-      result.put(slice, this.aggregates.get(slice));
-    }
-    return result;
-  }
-
-  @Override
-  public Map<MetricSlice, DataFrame> fetchBreakdowns(Collection<MetricSlice> slices, final Set<String> dimensions) {
+  public Map<MetricSlice, DataFrame> fetchAggregates(Collection<MetricSlice> slices, final List<String> dimensions) {
     Map<MetricSlice, DataFrame> result = new HashMap<>();
     for (MetricSlice slice : slices) {
       List<String> expr = new ArrayList<>();

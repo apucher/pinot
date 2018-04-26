@@ -2,10 +2,7 @@ package com.linkedin.thirdeye.detection;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
-import com.linkedin.thirdeye.anomaly.events.EventFilter;
-import com.linkedin.thirdeye.anomaly.events.EventType;
 import com.linkedin.thirdeye.dashboard.resources.v2.aggregation.AggregationLoader;
-import com.linkedin.thirdeye.dashboard.resources.v2.timeseries.DefaultTimeSeriesLoader;
 import com.linkedin.thirdeye.dashboard.resources.v2.timeseries.TimeSeriesLoader;
 import com.linkedin.thirdeye.dataframe.DataFrame;
 import com.linkedin.thirdeye.dataframe.util.MetricSlice;
@@ -17,19 +14,22 @@ import com.linkedin.thirdeye.datalayer.dto.EventDTO;
 import com.linkedin.thirdeye.datalayer.dto.MergedAnomalyResultDTO;
 import com.linkedin.thirdeye.datalayer.dto.MetricConfigDTO;
 import com.linkedin.thirdeye.datalayer.util.Predicate;
-import com.linkedin.thirdeye.datasource.DAORegistry;
-import com.linkedin.thirdeye.rootcause.Pipeline;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 
 public class DefaultDataProvider implements DataProvider {
+  private final ExecutorService executor = Executors.newCachedThreadPool();
+
   private final MetricConfigManager metricDAO;
   private final EventManager eventDAO;
   private final MergedAnomalyResultManager anomalyDAO;
@@ -53,13 +53,28 @@ public class DefaultDataProvider implements DataProvider {
   }
 
   @Override
-  public Map<MetricSlice, DataFrame> fetchAggregates(Collection<MetricSlice> slices) {
-    throw new IllegalStateException("not implemented yet");
-  }
+  public Map<MetricSlice, DataFrame> fetchAggregates(Collection<MetricSlice> slices, final List<String> dimensions) {
+    try {
+      Map<MetricSlice, Future<DataFrame>> futures = new HashMap<>();
+      for (final MetricSlice slice : slices) {
+        futures.put(slice, this.executor.submit(new Callable<DataFrame>() {
+          @Override
+          public DataFrame call() throws Exception {
+            return DefaultDataProvider.this.aggregationLoader.loadAggregate(slice, dimensions);
+          }
+        }));
+      }
 
-  @Override
-  public Map<MetricSlice, DataFrame> fetchBreakdowns(Collection<MetricSlice> slices, Set<String> dimensions) {
-    throw new IllegalStateException("not implemented yet");
+      final long deadline = System.currentTimeMillis();
+      Map<MetricSlice, DataFrame> output = new HashMap<>();
+      for (MetricSlice slice : slices) {
+        output.put(slice, futures.get(slice).get(makeTimeout(deadline), TimeUnit.MILLISECONDS));
+      }
+      return output;
+
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Override
@@ -124,5 +139,10 @@ public class DefaultDataProvider implements DataProvider {
 
   private static Predicate AND(Collection<Predicate> predicates) {
     return Predicate.AND(predicates.toArray(new Predicate[predicates.size()]));
+  }
+
+  private static long makeTimeout(long deadline) {
+    long diff = deadline - System.currentTimeMillis();
+    return diff > 0 ? diff : 0;
   }
 }

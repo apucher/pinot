@@ -38,7 +38,6 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTimeZone;
-import org.joda.time.Period;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
@@ -383,7 +382,11 @@ public class RootCauseMetricResource {
       futures.put(slice, this.executor.submit(new Callable<Double>() {
         @Override
         public Double call() throws Exception {
-          return RootCauseMetricResource.this.aggregationLoader.loadAggregate(slice);
+          DataFrame df = RootCauseMetricResource.this.aggregationLoader.loadAggregate(slice, Collections.<String>emptyList());
+          if (df.isEmpty()) {
+            return Double.NaN;
+          }
+          return df.getDouble(COL_VALUE, 0);
         }
       }));
     }

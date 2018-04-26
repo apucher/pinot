@@ -6,6 +6,7 @@ import com.linkedin.thirdeye.dataframe.util.MetricSlice;
 import com.linkedin.thirdeye.datalayer.dto.DetectionConfigDTO;
 import com.linkedin.thirdeye.datalayer.dto.EventDTO;
 import com.linkedin.thirdeye.datalayer.dto.MergedAnomalyResultDTO;
+import java.util.Collections;
 import java.util.Map;
 
 
@@ -22,13 +23,12 @@ public abstract class StaticDetectionPipeline extends DetectionPipeline {
   public final DetectionPipelineResult run() throws Exception {
     StaticDetectionPipelineModel model = this.getModel();
     Map<MetricSlice, DataFrame> timeseries = this.provider.fetchTimeseries(model.timeseriesSlices);
-    Map<MetricSlice, DataFrame> aggregates = this.provider.fetchAggregates(model.aggregateSlices);
-    Map<MetricSlice, DataFrame> breakdowns = this.provider.fetchBreakdowns(model.breakdownSlices, model.breakdownDimensions);
+    Map<MetricSlice, DataFrame> aggregates = this.provider.fetchAggregates(model.aggregateSlices, Collections.<String>emptyList());
     Multimap<AnomalySlice, MergedAnomalyResultDTO> anomalies = this.provider.fetchAnomalies(model.anomalySlices);
     Multimap<EventSlice, EventDTO> events = this.provider.fetchEvents(model.eventSlices);
 
     StaticDetectionPipelineData data = new StaticDetectionPipelineData(
-        model, timeseries, aggregates, breakdowns, anomalies, events);
+        model, timeseries, aggregates, anomalies, events);
 
     return this.run(data);
   }

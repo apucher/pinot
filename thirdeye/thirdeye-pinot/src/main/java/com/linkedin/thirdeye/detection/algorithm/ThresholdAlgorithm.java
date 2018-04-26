@@ -51,7 +51,7 @@ public class ThresholdAlgorithm extends StaticDetectionPipeline {
   @Override
   public StaticDetectionPipelineModel getModel() {
     return new StaticDetectionPipelineModel()
-        .withTimeseriesSlices(Collections.singletonList(slice));
+        .withTimeseriesSlices(Collections.singletonList(this.slice));
   }
 
   @Override

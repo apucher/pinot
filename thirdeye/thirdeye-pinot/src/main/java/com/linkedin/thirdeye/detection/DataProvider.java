@@ -8,6 +8,7 @@ import com.linkedin.thirdeye.datalayer.dto.EventDTO;
 import com.linkedin.thirdeye.datalayer.dto.MergedAnomalyResultDTO;
 import com.linkedin.thirdeye.datalayer.dto.MetricConfigDTO;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -15,9 +16,7 @@ import java.util.Set;
 public interface DataProvider {
   Map<MetricSlice, DataFrame> fetchTimeseries(Collection<MetricSlice> slices);
 
-  Map<MetricSlice, DataFrame> fetchAggregates(Collection<MetricSlice> slices);
-
-  Map<MetricSlice, DataFrame> fetchBreakdowns(Collection<MetricSlice> slices, Set<String> dimensions);
+  Map<MetricSlice, DataFrame> fetchAggregates(Collection<MetricSlice> slices, List<String> dimensions);
 
   Multimap<AnomalySlice, MergedAnomalyResultDTO> fetchAnomalies(Collection<AnomalySlice> slices);
 
