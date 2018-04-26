@@ -197,6 +197,9 @@ public class ThirdEyeAnomalyApplication
         if (detectionOnboardServiceExecutor != null) {
           detectionOnboardServiceExecutor.shutdown();
         }
+        if (detectionPipelineScheduler != null) {
+          detectionPipelineScheduler.shutdown();
+        }
       }
     });
   }
