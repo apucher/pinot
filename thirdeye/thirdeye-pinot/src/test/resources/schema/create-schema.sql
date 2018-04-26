@@ -355,7 +355,7 @@ create index rootcause_session_base_id_idx ON rootcause_session_index(base_id);
 create table if not exists detection_config_index (
     base_id bigint(20) not null,
     `name` VARCHAR(256) not null,
-    className VARCHAR(1023) not null,
+    className VARCHAR(256) not null,
     create_time timestamp,
     update_time timestamp default current_timestamp,
     version int(10)
