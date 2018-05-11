@@ -9,6 +9,7 @@ import com.linkedin.thirdeye.datalayer.bao.AnomalyFunctionManager;
 import com.linkedin.thirdeye.datalayer.bao.ApplicationManager;
 import com.linkedin.thirdeye.datalayer.bao.ClassificationConfigManager;
 import com.linkedin.thirdeye.datalayer.bao.DatasetConfigManager;
+import com.linkedin.thirdeye.datalayer.bao.DetectionAlertConfigManager;
 import com.linkedin.thirdeye.datalayer.bao.DetectionConfigManager;
 import com.linkedin.thirdeye.datalayer.bao.EntityToEntityMappingManager;
 import com.linkedin.thirdeye.datalayer.bao.MergedAnomalyResultManager;
@@ -20,6 +21,7 @@ import com.linkedin.thirdeye.datalayer.dto.AnomalyFunctionDTO;
 import com.linkedin.thirdeye.datalayer.dto.ApplicationDTO;
 import com.linkedin.thirdeye.datalayer.dto.ClassificationConfigDTO;
 import com.linkedin.thirdeye.datalayer.dto.DatasetConfigDTO;
+import com.linkedin.thirdeye.datalayer.dto.DetectionAlertConfigDTO;
 import com.linkedin.thirdeye.datalayer.dto.DetectionConfigDTO;
 import com.linkedin.thirdeye.datalayer.dto.EntityToEntityMappingDTO;
 import com.linkedin.thirdeye.datalayer.dto.MergedAnomalyResultDTO;
@@ -67,6 +69,7 @@ public class EntityManagerResource {
   private final EntityToEntityMappingManager entityToEntityMappingManager;
   private final DetectionConfigManager detectionConfigManager;
   private final MergedAnomalyResultManager mergedAnomalyResultManager;
+  private final DetectionAlertConfigManager detectionAlertConfigManager;
   private final ThirdEyeConfiguration config;
 
   private static final DAORegistry DAO_REGISTRY = DAORegistry.getInstance();
@@ -85,6 +88,7 @@ public class EntityManagerResource {
     this.entityToEntityMappingManager = DAO_REGISTRY.getEntityToEntityMappingDAO();
     this.detectionConfigManager = DAO_REGISTRY.getDetectionConfigManager();
     this.mergedAnomalyResultManager = DAO_REGISTRY.getMergedAnomalyResultDAO();
+    this.detectionAlertConfigManager = DAO_REGISTRY.getDetectionAlertConfigManager();
     this.config = configuration;
   }
 
@@ -98,6 +102,7 @@ public class EntityManagerResource {
     APPLICATION,
     ENTITY_MAPPING,
     DETECTION_CONFIG,
+    DETECTION_ALERT_CONFIG,
     MERGED_ANOMALY
   }
 
@@ -158,6 +163,9 @@ public class EntityManagerResource {
         break;
       case MERGED_ANOMALY:
         results.addAll(mergedAnomalyResultManager.findByPredicate(Predicate.GT("detectionConfigId", 0)));
+        break;
+      case DETECTION_ALERT_CONFIG:
+        results.addAll(detectionAlertConfigManager.findAll());
         break;
       default:
         throw new WebApplicationException("Unknown entity type : " + entityType);
@@ -251,6 +259,14 @@ public class EntityManagerResource {
             mergedAnomalyResultManager.save(mergedAnomalyResultDTO);
           } else {
             mergedAnomalyResultManager.update(mergedAnomalyResultDTO);
+          }
+          break;
+        case DETECTION_ALERT_CONFIG:
+          DetectionAlertConfigDTO detectionAlertConfigDTO = OBJECT_MAPPER.readValue(jsonPayload, DetectionAlertConfigDTO.class);
+          if (detectionAlertConfigDTO.getId() == null) {
+            detectionAlertConfigManager.save(detectionAlertConfigDTO);
+          } else {
+            detectionAlertConfigManager.update(detectionAlertConfigDTO);
           }
           break;
       }

@@ -9,6 +9,7 @@ import com.linkedin.thirdeye.datalayer.bao.ClassificationConfigManager;
 import com.linkedin.thirdeye.datalayer.bao.ConfigManager;
 import com.linkedin.thirdeye.datalayer.bao.DataCompletenessConfigManager;
 import com.linkedin.thirdeye.datalayer.bao.DatasetConfigManager;
+import com.linkedin.thirdeye.datalayer.bao.DetectionAlertConfigManager;
 import com.linkedin.thirdeye.datalayer.bao.DetectionConfigManager;
 import com.linkedin.thirdeye.datalayer.bao.DetectionStatusManager;
 import com.linkedin.thirdeye.datalayer.bao.EntityToEntityMappingManager;
@@ -31,6 +32,7 @@ import com.linkedin.thirdeye.datalayer.bao.jdbc.ClassificationConfigManagerImpl;
 import com.linkedin.thirdeye.datalayer.bao.jdbc.ConfigManagerImpl;
 import com.linkedin.thirdeye.datalayer.bao.jdbc.DataCompletenessConfigManagerImpl;
 import com.linkedin.thirdeye.datalayer.bao.jdbc.DatasetConfigManagerImpl;
+import com.linkedin.thirdeye.datalayer.bao.jdbc.DetectionAlertConfigManagerImpl;
 import com.linkedin.thirdeye.datalayer.bao.jdbc.DetectionConfigManagerImpl;
 import com.linkedin.thirdeye.datalayer.bao.jdbc.DetectionStatusManagerImpl;
 import com.linkedin.thirdeye.datalayer.bao.jdbc.EntityToEntityMappingManagerImpl;
@@ -157,5 +159,9 @@ public class DAORegistry {
 
   public DetectionConfigManager getDetectionConfigManager() {
     return DaoProviderUtil.getInstance(DetectionConfigManagerImpl.class);
+  }
+
+  public DetectionAlertConfigManager getDetectionAlertConfigManager() {
+    return DaoProviderUtil.getInstance(DetectionAlertConfigManagerImpl.class);
   }
 }
