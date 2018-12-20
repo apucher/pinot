@@ -108,15 +108,17 @@ public class DataCompletenessTaskRunner implements TaskRunner {
               DataCompletenessUtils.getAdjustedTimeForDataset(timeSpec, dataCompletenessStartTime, dateTimeZone);
           long adjustedEnd =
               DataCompletenessUtils.getAdjustedTimeForDataset(timeSpec, dataCompletenessEndTime, dateTimeZone);
-          long bucketSize = DataCompletenessUtils.getBucketSizeInMSForDataset(timeSpec);
+
+          // hack, use timezone and period instead
+          long bucketSizeInMillis = timeSpec.getDataGranularity().toPeriod().toStandardDuration().getMillis();
           DateTimeFormatter dateTimeFormatter =
               DataCompletenessUtils.getDateTimeFormatterForDataset(timeSpec, dateTimeZone);
           LOG.info("Adjusted start:{} i.e. {} Adjusted end:{} i.e. {} and Bucket size:{}",
-              adjustedStart, new DateTime(adjustedStart), adjustedEnd, new DateTime(adjustedEnd), bucketSize);
+              adjustedStart, new DateTime(adjustedStart), adjustedEnd, new DateTime(adjustedEnd), bucketSizeInMillis);
 
           // get buckets to process
           Map<String, Long> bucketNameToBucketValueMS = getBucketsToProcess(dataset, adjustedStart, adjustedEnd,
-              dataCompletenessAlgorithm, dateTimeFormatter, bucketSize);
+              dataCompletenessAlgorithm, dateTimeFormatter, bucketSizeInMillis);
           LOG.info("Got {} buckets to process", bucketNameToBucketValueMS.size());
 
           // TODO: for datasources other than pinot, this will change

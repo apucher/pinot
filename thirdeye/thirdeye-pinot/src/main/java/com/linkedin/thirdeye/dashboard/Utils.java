@@ -146,39 +146,6 @@ public class Utils {
     }
   }
 
-  /**
-   * Given a duration (in millis), a time granularity, and the target number of chunk to divide the
-   * duration, this method returns the time granularity that is able to divide the duration to a
-   * number of chunks that is fewer than or equals to the target number.
-   *
-   * For example, if the duration is 25 hours, time granularity is HOURS, and target number is 12,
-   * then the resized time granularity is 3_HOURS, which divide the duration to 9 chunks.
-   *
-   * @param duration the duration in milliseconds.
-   * @param timeGranularityString time granularity in String format.
-   * @param targetChunkNum the target number of chunks.
-   * @return the resized time granularity in order to divide the duration to the number of chunks
-   * that is smaller than or equals to the target chunk number.
-   */
-  public static String resizeTimeGranularity(long duration, String timeGranularityString, int targetChunkNum) {
-    TimeGranularity timeGranularity = TimeGranularity.fromString(timeGranularityString);
-
-    long timeGranularityMillis = timeGranularity.toMillis();
-    long chunkNum = duration / timeGranularityMillis;
-    if (duration % timeGranularityMillis != 0) {
-      ++chunkNum;
-    }
-    if (chunkNum > targetChunkNum) {
-      long targetIntervalDuration = (long) Math.ceil((double) duration / (double) targetChunkNum);
-      long unitTimeGranularityMillis = timeGranularity.getUnit().toMillis(1);
-      int size = (int) Math.ceil((double) targetIntervalDuration / (double) unitTimeGranularityMillis);
-      String newTimeGranularityString = size + "_" + timeGranularity.getUnit();
-      return newTimeGranularityString;
-    } else {
-      return timeGranularityString;
-    }
-  }
-
   public static List<MetricExpression> convertToMetricExpressions(
       List<MetricFunction> metricFunctions) {
     List<MetricExpression> metricExpressions = new ArrayList<>();

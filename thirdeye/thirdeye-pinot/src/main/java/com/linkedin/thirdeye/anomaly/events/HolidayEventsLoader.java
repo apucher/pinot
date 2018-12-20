@@ -30,6 +30,7 @@ import com.google.common.collect.ImmutableMap;
 import com.ibm.icu.util.TimeZone;
 import com.linkedin.thirdeye.anomaly.HolidayEventsLoaderConfiguration;
 import com.linkedin.thirdeye.api.TimeGranularity;
+import com.linkedin.thirdeye.api.TimeUnit;
 import com.linkedin.thirdeye.datalayer.bao.EventManager;
 import com.linkedin.thirdeye.datalayer.dto.EventDTO;
 import java.io.FileInputStream;
@@ -44,7 +45,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -237,7 +237,7 @@ public class HolidayEventsLoader implements Runnable {
    * Start.
    */
   public void start() {
-    scheduledExecutorService.scheduleAtFixedRate(this, 0, runFrequency.getSize(), runFrequency.getUnit());
+    scheduledExecutorService.scheduleAtFixedRate(this, 0, runFrequency.getSize(), runFrequency.getUnit().toJavaUnit());
   }
 
   /**

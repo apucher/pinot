@@ -19,6 +19,7 @@ package com.linkedin.thirdeye.dashboard.resources.v2;
 import com.google.common.base.Strings;
 import com.google.common.cache.LoadingCache;
 import com.linkedin.thirdeye.api.TimeGranularity;
+import com.linkedin.thirdeye.api.TimeUnit;
 import com.linkedin.thirdeye.dashboard.Utils;
 import com.linkedin.thirdeye.dashboard.resources.v2.pojo.TimeSeriesCompareMetricView;
 import com.linkedin.thirdeye.dashboard.resources.v2.pojo.ValuesContainer;
@@ -42,7 +43,6 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -113,8 +113,8 @@ public class TimeSeriesResource {
       }
       if (baselineEnd > currentEnd) {
         LOG.warn("Baseline time ranges are out of order, resetting as per current time ranges.");
-        baselineEnd = currentEnd - TimeUnit.DAYS.toMillis(7);
-        baselineStart = currentStart - TimeUnit.DAYS.toMillis(7);
+        baselineEnd = currentEnd - java.util.concurrent.TimeUnit.DAYS.toMillis(7);
+        baselineStart = currentStart - java.util.concurrent.TimeUnit.DAYS.toMillis(7);
       }
 
       if (StringUtils.isEmpty(granularity)) {
@@ -122,7 +122,8 @@ public class TimeSeriesResource {
       }
 
       if (limitDataPointNum) {
-        granularity = Utils.resizeTimeGranularity(analysisDuration, granularity, dataPointNum);
+        throw new IllegalArgumentException("Not supported anymore");
+//        granularity = Utils.resizeTimeGranularity(analysisDuration, granularity, dataPointNum);
       }
 
       if (dimension.equalsIgnoreCase(ALL)) {

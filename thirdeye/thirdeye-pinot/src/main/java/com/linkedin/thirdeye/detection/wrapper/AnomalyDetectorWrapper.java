@@ -18,9 +18,9 @@ package com.linkedin.thirdeye.detection.wrapper;
 
 import com.google.common.base.Preconditions;
 import com.linkedin.thirdeye.anomaly.detection.DetectionJobSchedulerUtils;
-import com.linkedin.thirdeye.anomalydetection.context.AnomalyResult;
 import com.linkedin.thirdeye.api.TimeGranularity;
 import com.linkedin.thirdeye.api.TimeSpec;
+import com.linkedin.thirdeye.api.TimeUnit;
 import com.linkedin.thirdeye.datalayer.dto.AnomalyFunctionDTO;
 import com.linkedin.thirdeye.datalayer.dto.DatasetConfigDTO;
 import com.linkedin.thirdeye.datalayer.dto.DetectionConfigDTO;
@@ -37,7 +37,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import org.apache.commons.collections.MapUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -82,7 +81,6 @@ public class AnomalyDetectorWrapper extends DetectionPipeline {
   // need to specify run frequency for minute level detection. Used for moving monitoring window alignment, default to be 15 minutes.
   private final TimeGranularity functionFrequency;
   private final String detectorName;
-  private final long windowSizeMillis;
   private final DatasetConfigDTO dataset;
   private final DateTimeZone dateTimeZone;
 
@@ -108,7 +106,6 @@ public class AnomalyDetectorWrapper extends DetectionPipeline {
     // detection window size
     this.windowSize = MapUtils.getIntValue(config.getProperties(), PROP_WINDOW_SIZE, 1);
     this.windowUnit = TimeUnit.valueOf(MapUtils.getString(config.getProperties(), PROP_WINDOW_UNIT, "DAYS"));
-    this.windowSizeMillis = TimeUnit.MILLISECONDS.convert(windowSize, windowUnit);
     // run frequency, used to determine moving windows for minute-level detection
     Map<String, Object> frequency = MapUtils.getMap(config.getProperties(), PROP_FREQUENCY, Collections.emptyMap());
     this.functionFrequency = new TimeGranularity(MapUtils.getIntValue(frequency, "size", 15), TimeUnit.valueOf(MapUtils.getString(frequency, "unit", "MINUTES")));
@@ -153,13 +150,17 @@ public class AnomalyDetectorWrapper extends DetectionPipeline {
       try{
         List<Interval> monitoringWindows = new ArrayList<>();
         List<Long> monitoringWindowEndTimes = getMonitoringWindowEndTimes();
+
+        TimeGranularity delay = new TimeGranularity(windowDelay, windowDelayUnit);
+        TimeGranularity window = new TimeGranularity(windowSize, windowUnit);
+
         for (long monitoringEndTime : monitoringWindowEndTimes) {
-          long endTime = monitoringEndTime - TimeUnit.MILLISECONDS.convert(windowDelay, windowDelayUnit);
-          long startTime = endTime - this.windowSizeMillis;
+          long endTime = new DateTime(monitoringEndTime, dateTimeZone).minus(delay.toPeriod()).getMillis();
+          long startTime = new DateTime(endTime, dateTimeZone).minus(window.toPeriod()).getMillis();
           monitoringWindows.add(new Interval(startTime, endTime, dateTimeZone));
         }
-        for (Interval window : monitoringWindows){
-          LOG.info("running detections in windows {}", window);
+        for (Interval interval : monitoringWindows){
+          LOG.info("running detections in windows {}", interval);
         }
         return monitoringWindows;
       } catch (Exception e) {

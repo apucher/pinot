@@ -29,7 +29,7 @@ import com.linkedin.thirdeye.api.Constants;
 import com.linkedin.thirdeye.api.DimensionMap;
 import com.linkedin.thirdeye.api.TimeGranularity;
 import com.linkedin.thirdeye.api.TimeSpec;
-import com.linkedin.thirdeye.constant.AnomalyFeedbackType;
+import com.linkedin.thirdeye.api.TimeUnit;
 import com.linkedin.thirdeye.constant.AnomalyResultSource;
 import com.linkedin.thirdeye.constant.MetricAggFunction;
 import com.linkedin.thirdeye.dashboard.resources.v2.AnomaliesResource;
@@ -64,7 +64,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -649,8 +648,11 @@ public class AnomalyResource {
       LOG.error("AnomalyTimelinesView or AnomalyFunctionDTO is null");
       return null;
     }
-    long bucketMillis =
-        (new TimeGranularity(anomalyFunctionSpec.getBucketSize(), anomalyFunctionSpec.getBucketUnit())).toMillis();
+    TimeGranularity granularity = new TimeGranularity(anomalyFunctionSpec.getBucketSize(), anomalyFunctionSpec.getBucketUnit());
+
+    // TODO check if granularity can be fixed without impacting anomaly function
+    long bucketMillis = granularity.toPeriod().toStandardDuration().getMillis();
+
     Tuple2<TimeSeries, TimeSeries> timeSeriesTuple = TimeSeriesUtils.toTimeSeries(originalTimelinesView);
     TimeSeries observed = timeSeriesTuple._1();
     TimeSeries expected = timeSeriesTuple._2();
@@ -682,7 +684,7 @@ public class AnomalyResource {
             }
             // align timestamp to the begin of the day if Bucket is in DAYS
             long indexTimestamp = timestamp;
-            if (TimeUnit.DAYS.toMillis(1l) == bucketMillis) {
+            if (TimeUnit.DAYS.equals(granularity.getUnit())) {
               timestamp = alignToStartOfTheDay(timestamp, timeZone).getMillis();
             }
             if (timeSeriesInterval.contains(timestamp)) {
@@ -707,6 +709,7 @@ public class AnomalyResource {
         }
       }
     }
+
     return TimeSeriesUtils.toAnomalyTimeLinesView(observed, expected, bucketMillis);
   }
 

@@ -34,6 +34,7 @@ import com.linkedin.thirdeye.anomalydetection.model.prediction.PredictionModel;
 import com.linkedin.thirdeye.anomalydetection.model.transform.TransformationFunction;
 import com.linkedin.thirdeye.api.DimensionMap;
 import com.linkedin.thirdeye.api.MetricTimeSeries;
+import com.linkedin.thirdeye.api.TimeGranularity;
 import com.linkedin.thirdeye.dashboard.views.TimeBucket;
 import com.linkedin.thirdeye.datalayer.dto.AnomalyFunctionDTO;
 import com.linkedin.thirdeye.datalayer.dto.MergedAnomalyResultDTO;
@@ -265,7 +266,7 @@ public abstract class AbstractModularizedAnomalyFunction extends BaseAnomalyFunc
       DateTime windowStart, DateTime windowEnd, List<MergedAnomalyResultDTO> knownAnomalies) {
     AnomalyDetectionContext anomalyDetectionContext = BackwardAnomalyFunctionUtils
         .buildAnomalyDetectionContext(this, timeSeries, spec.getTopicMetric(), exploredDimensions,
-            spec.getBucketSize(), spec.getBucketUnit(), windowStart, windowEnd, knownAnomalies);
+            new TimeGranularity(spec.getBucketSize(), spec.getBucketUnit()), windowStart, windowEnd, knownAnomalies);
 
     return this.analyze(anomalyDetectionContext);
   }
@@ -279,7 +280,7 @@ public abstract class AbstractModularizedAnomalyFunction extends BaseAnomalyFunc
     if (!(getMergeModel() instanceof NoPredictionMergeModel)) {
       anomalyDetectionContext = BackwardAnomalyFunctionUtils
           .buildAnomalyDetectionContext(this, timeSeries, spec.getTopicMetric(),
-              anomalyToUpdated.getDimensions(), spec.getBucketSize(), spec.getBucketUnit(),
+              anomalyToUpdated.getDimensions(), new TimeGranularity(spec.getBucketSize(), spec.getBucketUnit()),
               windowStart, windowEnd, knownAnomalies);
     }
 
@@ -293,7 +294,7 @@ public abstract class AbstractModularizedAnomalyFunction extends BaseAnomalyFunc
       List<MergedAnomalyResultDTO> knownAnomalies) {
     AnomalyDetectionContext anomalyDetectionContext = BackwardAnomalyFunctionUtils
         .buildAnomalyDetectionContext(this, timeSeries, spec.getTopicMetric(), null,
-            spec.getBucketSize(), spec.getBucketUnit(), new DateTime(viewWindowStartTime),
+            new TimeGranularity(spec.getBucketSize(), spec.getBucketUnit()), new DateTime(viewWindowStartTime),
             new DateTime(viewWindowEndTime), knownAnomalies);
 
     return this.getTimeSeriesView(anomalyDetectionContext, bucketMillis, metric, viewWindowStartTime, viewWindowEndTime,

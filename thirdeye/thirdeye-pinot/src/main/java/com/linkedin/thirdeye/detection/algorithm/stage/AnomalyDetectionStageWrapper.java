@@ -20,6 +20,7 @@ import com.google.common.base.Preconditions;
 import com.linkedin.thirdeye.anomaly.detection.DetectionJobSchedulerUtils;
 import com.linkedin.thirdeye.api.TimeGranularity;
 import com.linkedin.thirdeye.api.TimeSpec;
+import com.linkedin.thirdeye.api.TimeUnit;
 import com.linkedin.thirdeye.datalayer.dto.DatasetConfigDTO;
 import com.linkedin.thirdeye.datalayer.dto.DetectionConfigDTO;
 import com.linkedin.thirdeye.datalayer.dto.MergedAnomalyResultDTO;
@@ -34,7 +35,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import org.apache.commons.collections.MapUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -140,9 +140,13 @@ public class AnomalyDetectionStageWrapper extends DetectionPipeline {
             .get(metricConfigDTO.getDataset());
         dateTimeZone = DateTimeZone.forID(dataset.getTimezone());
         List<Long> monitoringWindowEndTimes = getMonitoringWindowEndTimes();
+
+        TimeGranularity delay = new TimeGranularity(windowDelay, windowDelayUnit);
+        TimeGranularity window = new TimeGranularity(windowSize, windowUnit);
+
         for (long monitoringEndTime : monitoringWindowEndTimes) {
-          long endTime = monitoringEndTime - TimeUnit.MILLISECONDS.convert(windowDelay, windowDelayUnit);
-          long startTime = endTime - TimeUnit.MILLISECONDS.convert(windowSize, windowUnit);
+          long endTime = new DateTime(monitoringEndTime, dateTimeZone).minus(delay.toPeriod()).getMillis();
+          long startTime = new DateTime(endTime, dateTimeZone).minus(window.toPeriod()).getMillis();
           monitoringWindows.add(new Interval(startTime, endTime));
         }
         return monitoringWindows;

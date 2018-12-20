@@ -17,7 +17,7 @@
 package com.linkedin.thirdeye.datalayer.dto;
 
 import com.linkedin.thirdeye.api.TimeGranularity;
-import java.util.concurrent.TimeUnit;
+import com.linkedin.thirdeye.api.TimeUnit;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 

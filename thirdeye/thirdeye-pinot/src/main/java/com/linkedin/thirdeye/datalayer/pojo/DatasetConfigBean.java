@@ -19,16 +19,14 @@ package com.linkedin.thirdeye.datalayer.pojo;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.linkedin.thirdeye.api.TimeGranularity;
 import com.linkedin.thirdeye.api.TimeSpec;
+import com.linkedin.thirdeye.api.TimeUnit;
 import com.linkedin.thirdeye.completeness.checker.Wo4WAvgDataCompletenessAlgorithm;
-import com.linkedin.thirdeye.datasource.pinot.PinotThirdEyeDataSource;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 @JsonIgnoreProperties(ignoreUnknown=true)
 public class DatasetConfigBean extends AbstractBean {

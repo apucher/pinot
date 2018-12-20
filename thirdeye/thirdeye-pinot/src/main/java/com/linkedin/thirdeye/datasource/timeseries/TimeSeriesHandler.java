@@ -87,7 +87,7 @@ public class TimeSeriesHandler {
     if (timeSeriesRequest.isEndDateInclusive()) {
       // ThirdEyeRequest is exclusive endpoint, so increment by one bucket
       TimeGranularity aggregationTimeGranularity = timeSeriesRequest.getAggregationTimeGranularity();
-      end = end.plus(aggregationTimeGranularity.toMillis());
+      end = end.plus(aggregationTimeGranularity.toPeriod());
     }
     // Create request
     ThirdEyeRequest request = createThirdEyeRequest("timeseries", timeSeriesRequest, start, end);

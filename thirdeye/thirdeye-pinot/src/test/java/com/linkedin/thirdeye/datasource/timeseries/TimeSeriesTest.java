@@ -16,13 +16,13 @@
 
 package com.linkedin.thirdeye.datasource.timeseries;
 
+import com.linkedin.thirdeye.api.TimeUnit;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 import org.joda.time.DateTime;
 
@@ -35,9 +35,6 @@ import com.linkedin.thirdeye.datasource.MetricFunction;
 import com.linkedin.thirdeye.datasource.ThirdEyeDataSource;
 import com.linkedin.thirdeye.datasource.cache.QueryCache;
 import com.linkedin.thirdeye.datasource.pinot.PinotThirdEyeDataSource;
-import com.linkedin.thirdeye.datasource.timeseries.TimeSeriesHandler;
-import com.linkedin.thirdeye.datasource.timeseries.TimeSeriesRequest;
-import com.linkedin.thirdeye.datasource.timeseries.TimeSeriesResponse;
 import com.linkedin.thirdeye.datasource.timeseries.TimeSeriesRow.TimeSeriesMetric;
 
 /** Manual test for verifying code works as expected (ie without exceptions thrown) */

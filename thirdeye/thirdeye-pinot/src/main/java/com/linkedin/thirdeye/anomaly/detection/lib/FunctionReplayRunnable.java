@@ -20,6 +20,7 @@ import com.linkedin.thirdeye.anomaly.detection.DetectionJobScheduler;
 import com.linkedin.thirdeye.anomalydetection.performanceEvaluation.PerformanceEvaluate;
 import com.linkedin.thirdeye.anomalydetection.performanceEvaluation.PerformanceEvaluateHelper;
 import com.linkedin.thirdeye.anomalydetection.performanceEvaluation.PerformanceEvaluationMethod;
+import com.linkedin.thirdeye.api.TimeUnit;
 import com.linkedin.thirdeye.dashboard.resources.OnboardResource;
 import com.linkedin.thirdeye.datalayer.bao.AnomalyFunctionManager;
 import com.linkedin.thirdeye.datalayer.bao.AutotuneConfigManager;
@@ -29,7 +30,6 @@ import com.linkedin.thirdeye.datalayer.dto.AutotuneConfigDTO;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.slf4j.Logger;
@@ -97,8 +97,6 @@ public class FunctionReplayRunnable implements Runnable {
 
   public static void speedup(AnomalyFunctionDTO anomalyFunctionDTO) {
     switch (anomalyFunctionDTO.getWindowUnit()) {
-      case NANOSECONDS:
-      case MICROSECONDS:
       case MILLISECONDS:
       case SECONDS:
       case MINUTES:       // These TimeUnits are not currently in use

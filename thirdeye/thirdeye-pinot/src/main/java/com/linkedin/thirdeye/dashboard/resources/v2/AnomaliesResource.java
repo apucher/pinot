@@ -33,6 +33,7 @@ import com.linkedin.thirdeye.api.MetricTimeSeries;
 import com.linkedin.thirdeye.api.TimeGranularity;
 import com.linkedin.thirdeye.api.TimeRange;
 import com.linkedin.thirdeye.api.TimeSpec;
+import com.linkedin.thirdeye.api.TimeUnit;
 import com.linkedin.thirdeye.constant.AnomalyFeedbackType;
 import com.linkedin.thirdeye.constant.AnomalyResultSource;
 import com.linkedin.thirdeye.dashboard.Utils;
@@ -95,7 +96,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.DefaultValue;
@@ -743,7 +743,7 @@ public class AnomaliesResource {
     List<AnomalyDetails> anomalyDetailsList = new ArrayList<>();
     for (Future<AnomalyDetails> anomalyDetailsFuture : anomalyDetailsListFutures) {
       try {
-        AnomalyDetails anomalyDetails = anomalyDetailsFuture.get(120, TimeUnit.SECONDS);
+        AnomalyDetails anomalyDetails = anomalyDetailsFuture.get(120, java.util.concurrent.TimeUnit.SECONDS);
         if (anomalyDetails != null) {
           anomalyDetailsList.add(anomalyDetails);
         }
@@ -836,24 +836,24 @@ public class AnomaliesResource {
 
     // Dataset time granularity
     String aggGranularity = datasetConfig.bucketTimeGranularity().toAggregationGranularityString();
-    TimeGranularity timeGranularity =
+    TimeGranularity datasetTimeGranularity =
         Utils.getAggregationTimeGranularity(aggGranularity, anomalyFunctionSpec.getCollection());
 
-    // Anomaly function time granularity
-    TimeGranularity functionTimeGranularity =
+    // Anomaly function time granularity by default
+    TimeGranularity timeGranularity =
         new TimeGranularity(anomalyFunctionSpec.getBucketSize(), anomalyFunctionSpec.getBucketUnit());
 
-    long bucketMillis = functionTimeGranularity.toMillis();
     /*
      If the function-specified time granularity is smaller than the dataset time granularity, use the dataset's.
 
      Ex: If the time granularity of the dataset is 1-Day and function assigns 1-Hours, than use 1-Day
       */
-    if (functionTimeGranularity.toMillis() < timeGranularity.toMillis()) {
+    if (TimeGranularity.compare(timeGranularity, datasetTimeGranularity) < 0) {
       LOG.warn("The time granularity of the function {}, {}, is smaller than the dataset's, {}. Use dataset's setting.",
-          functionTimeGranularity.toString(), anomalyFunctionSpec.getId(), aggGranularity.toString());
-      bucketMillis = timeGranularity.toMillis();
+          timeGranularity.toString(), anomalyFunctionSpec.getId(), aggGranularity);
+      timeGranularity = datasetTimeGranularity;
     }
+
     AnomalyTimelinesView anomalyTimelinesView = null;
     AnomalyDetectionInputContextBuilder anomalyDetectionInputContextBuilder =
         new AnomalyDetectionInputContextBuilder(anomalyFunctionFactory);
@@ -876,7 +876,11 @@ public class AnomaliesResource {
     List<MergedAnomalyResultDTO> knownAnomalies = adInputContext.getKnownMergedAnomalies().get(dimensions);
     // Known anomalies are ignored (the null parameter) because 1. we can reduce users' waiting time and 2. presentation
     // data does not need to be as accurate as the one used for detecting anomalies
-    anomalyTimelinesView = anomalyFunction.getTimeSeriesView(metricTimeSeries, bucketMillis, anomalyFunctionSpec.getTopicMetric(),
+
+    // TODO fix anomaly interface to use TimeGranularity rather than millis
+    long timeGranularityMillis = timeGranularity.toPeriod().toStandardDuration().getMillis();
+
+    anomalyTimelinesView = anomalyFunction.getTimeSeriesView(metricTimeSeries, timeGranularityMillis, anomalyFunctionSpec.getTopicMetric(),
         monitoringDataInterval.getFirst(), monitoringDataInterval.getSecond(), knownAnomalies);
 
 

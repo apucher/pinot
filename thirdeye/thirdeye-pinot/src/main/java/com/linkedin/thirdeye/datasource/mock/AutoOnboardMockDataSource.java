@@ -1,5 +1,6 @@
 package com.linkedin.thirdeye.datasource.mock;
 
+import com.linkedin.thirdeye.api.TimeUnit;
 import com.linkedin.thirdeye.auto.onboard.AutoOnboard;
 import com.linkedin.thirdeye.datalayer.bao.DatasetConfigManager;
 import com.linkedin.thirdeye.datalayer.bao.MetricConfigManager;
@@ -13,7 +14,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import org.apache.commons.collections.MapUtils;
 import org.joda.time.Period;
 import org.slf4j.Logger;

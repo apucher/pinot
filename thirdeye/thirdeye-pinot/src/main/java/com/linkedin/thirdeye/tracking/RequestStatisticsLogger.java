@@ -52,7 +52,7 @@ public class RequestStatisticsLogger implements Runnable {
   public void start() {
     LOG.info("starting logger");
     this.scheduledExecutorService.scheduleWithFixedDelay(this,
-        this.runFrequency.getSize(), this.runFrequency.getSize(), this.runFrequency.getUnit());
+        this.runFrequency.getSize(), this.runFrequency.getSize(), this.runFrequency.getUnit().toJavaUnit());
   }
 
   public void shutdown() {

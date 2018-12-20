@@ -16,10 +16,10 @@
 
 package com.linkedin.thirdeye.anomaly.detection;
 
+import com.linkedin.thirdeye.api.TimeUnit;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -220,9 +220,10 @@ public class DetectionJobSchedulerUtils {
    */
   public static long getExpectedCompleteBuckets(DatasetConfigDTO datasetConfig, long startTime, long endTime) {
     TimeSpec timeSpec = ThirdEyeUtils.getTimeSpecFromDatasetConfig(datasetConfig);
-    // Get this from DataCompletenessUtils because that determines number of buckets to check
-    long bucketSize = DataCompletenessUtils.getBucketSizeInMSForDataset(timeSpec);
-    long numBuckets = (endTime - startTime)/bucketSize;
+    // hack, use timezone and period instead
+    long bucketSizeInMillis = timeSpec.getDataGranularity().toPeriod().toStandardDuration().getMillis();
+
+    long numBuckets = (endTime - startTime)/bucketSizeInMillis;
     return numBuckets;
   }
 

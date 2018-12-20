@@ -19,6 +19,7 @@ package com.linkedin.thirdeye.anomalydetection.model.transform;
 import com.linkedin.thirdeye.anomalydetection.context.AnomalyDetectionContext;
 import com.linkedin.thirdeye.anomalydetection.context.TimeSeries;
 import com.linkedin.thirdeye.api.DimensionMap;
+import com.linkedin.thirdeye.api.TimeGranularity;
 import org.joda.time.Interval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,7 +53,8 @@ public class MovingAverageSmoothingFunction extends AbstractTransformationFuncti
     long startTime = timeSeriesInterval.getStartMillis();
     long endTime = timeSeriesInterval.getEndMillis();
 
-    long bucketSizeInMillis = anomalyDetectionContext.getBucketSizeInMS();
+    // hack, use timezone and period instead
+    long bucketSizeInMillis = anomalyDetectionContext.getBucketSize().toPeriod().toStandardDuration().getMillis();
 
     int movingAverageWindowSize =
         Integer.valueOf(getProperties().getProperty(MOVING_AVERAGE_SMOOTHING_WINDOW_SIZE));

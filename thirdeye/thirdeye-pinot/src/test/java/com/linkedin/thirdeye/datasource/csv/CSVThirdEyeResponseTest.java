@@ -18,6 +18,7 @@ package com.linkedin.thirdeye.datasource.csv;
 
 import com.linkedin.thirdeye.api.TimeGranularity;
 import com.linkedin.thirdeye.api.TimeSpec;
+import com.linkedin.thirdeye.api.TimeUnit;
 import com.linkedin.thirdeye.constant.MetricAggFunction;
 import com.linkedin.thirdeye.dataframe.DataFrame;
 import com.linkedin.thirdeye.datasource.MetricFunction;
@@ -26,7 +27,6 @@ import com.linkedin.thirdeye.datasource.ThirdEyeResponseRow;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;

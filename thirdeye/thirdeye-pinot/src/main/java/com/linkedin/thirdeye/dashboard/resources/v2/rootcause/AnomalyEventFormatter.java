@@ -41,6 +41,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.lang.StringUtils;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.Period;
 
 
 public class AnomalyEventFormatter extends RootCauseEventEntityFormatter {
@@ -191,7 +194,11 @@ public class AnomalyEventFormatter extends RootCauseEventEntityFormatter {
   private double getAggregateMultiplier(MergedAnomalyResultDTO anomaly, DatasetConfigDTO dataset, MetricConfigDTO metric) {
     if (MetricAggFunction.SUM.equals(metric.getDefaultAggFunction())
         || MetricAggFunction.COUNT.equals(metric.getDefaultAggFunction())) {
-      return dataset.bucketTimeGranularity().toMillis() / (double) (anomaly.getEndTime() - anomaly.getStartTime());
+      DateTimeZone timeZone = DateTimeZone.forID(dataset.getTimezone());
+      DateTime start = new DateTime(anomaly.getStartTime(), timeZone);
+      DateTime end = new DateTime(anomaly.getEndTime(), timeZone);
+
+      return divideByPeriod(start, end, dataset.bucketTimeGranularity().toPeriod());
 
     } else {
       return 1.0;
@@ -209,5 +216,26 @@ public class AnomalyEventFormatter extends RootCauseEventEntityFormatter {
       return anomaly.getEndTime();
     }
     return (long) Math.floor((anomaly.getEndTime() + 59999) / 60000.0) * 60000;
+  }
+
+  /**
+   * Manual division of time range by period to handle DST and other calendar effects
+   *
+   * @param start anomaly start
+   * @param end anomaly end
+   * @param period time period derived from ganularity
+   * @return fractions of granularity
+   */
+  private static double divideByPeriod(DateTime start, DateTime end, Period period) {
+    int counter = 0;
+    DateTime origin = start;
+    while (!origin.plus(period).isAfter(end)) {
+      origin.plus(period);
+      counter++;
+    }
+    DateTime next = origin.plus(period);
+    long diffEnd = end.getMillis() - origin.getMillis();
+    long diffNext = next.getMillis() - origin.getMillis();
+    return counter + diffEnd / (double) diffNext;
   }
 }

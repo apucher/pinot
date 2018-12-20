@@ -22,22 +22,18 @@ import com.linkedin.thirdeye.anomalydetection.context.AnomalyResult;
 import com.linkedin.thirdeye.api.DimensionMap;
 import com.linkedin.thirdeye.api.MetricTimeSeries;
 import com.linkedin.thirdeye.api.TimeGranularity;
+import com.linkedin.thirdeye.api.TimeUnit;
 import com.linkedin.thirdeye.dashboard.views.TimeBucket;
+import com.linkedin.thirdeye.datalayer.dto.AnomalyFunctionDTO;
 import com.linkedin.thirdeye.datalayer.dto.DatasetConfigDTO;
 import com.linkedin.thirdeye.datalayer.dto.MergedAnomalyResultDTO;
-
+import com.linkedin.thirdeye.util.AnomalyOffset;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
-
-import com.linkedin.thirdeye.datalayer.dto.AnomalyFunctionDTO;
-import com.linkedin.thirdeye.util.AnomalyOffset;
-
-import java.util.concurrent.TimeUnit;
-
 import org.joda.time.DateTime;
 import org.joda.time.Period;
 import org.slf4j.Logger;
@@ -110,7 +106,7 @@ public abstract class BaseAnomalyFunction implements AnomalyFunction {
     int bucketCount = (int) ((viewWindowEndTime - viewWindowStartTime) / bucketMillis);
     for (int i = 0; i < bucketCount; ++i) {
       long currentBucketMillis = viewWindowStartTime + i * bucketMillis;
-      long baselineBucketMillis = currentBucketMillis - TimeUnit.DAYS.toMillis(7);
+      long baselineBucketMillis = currentBucketMillis - java.util.concurrent.TimeUnit.DAYS.toMillis(7);
       TimeBucket timebucket =
           new TimeBucket(currentBucketMillis, currentBucketMillis + bucketMillis, baselineBucketMillis,
               baselineBucketMillis + bucketMillis);

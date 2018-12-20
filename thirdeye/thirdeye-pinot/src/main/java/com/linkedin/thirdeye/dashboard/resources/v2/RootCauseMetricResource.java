@@ -442,7 +442,7 @@ public class RootCauseMetricResource {
 
     TimeGranularity granularity = dataset.bucketTimeGranularity();
     if (!MetricSlice.NATIVE_GRANULARITY.equals(slice.getGranularity())
-        && slice.getGranularity().toMillis() >= granularity.toMillis()) {
+        && TimeGranularity.compare(slice.getGranularity(), granularity) >= 0) {
       granularity = slice.getGranularity();
     }
 
@@ -643,10 +643,13 @@ public class RootCauseMetricResource {
     }
 
     // align to time buckets and request time zone
-    long offset = DateTimeZone.forID(timezone).getOffset(slice.getStart());
-    long timeGranularity = granularity.toMillis();
-    long start = ((slice.getStart() + offset) / timeGranularity) * timeGranularity - offset;
-    long end = ((slice.getEnd() + offset + timeGranularity - 1) / timeGranularity) * timeGranularity - offset;
+    Period roundingPeriod = granularity.toPeriod().minusMillis(1);
+    DateTimeZone alignTimeZone = DateTimeZone.forID(timezone);
+    DateTime rawStart = new DateTime(slice.getStart(), alignTimeZone);
+    DateTime rawEnd = new DateTime(slice.getStart(), alignTimeZone);
+
+    long start = granularity.toTimestamp(granularity.fromTimestamp(rawStart), alignTimeZone);
+    long end = granularity.toTimestamp(granularity.fromTimestamp(rawEnd.plus(roundingPeriod)), alignTimeZone);
 
     return slice.withStart(start).withEnd(end).withGranularity(granularity);
   }

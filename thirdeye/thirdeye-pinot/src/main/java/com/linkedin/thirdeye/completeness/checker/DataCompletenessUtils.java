@@ -18,7 +18,10 @@ package com.linkedin.thirdeye.completeness.checker;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
+import com.linkedin.thirdeye.api.TimeGranularity;
 import com.linkedin.thirdeye.api.TimeSpec;
+import com.linkedin.thirdeye.api.TimeUnit;
+import com.linkedin.thirdeye.dashboard.Utils;
 import com.linkedin.thirdeye.datasource.ThirdEyeCacheRegistry;
 import com.linkedin.thirdeye.datasource.pinot.PinotQuery;
 import com.linkedin.thirdeye.datasource.pinot.PinotThirdEyeDataSource;
@@ -29,7 +32,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
@@ -62,7 +64,7 @@ public class DataCompletenessUtils {
    * and 12:50pm on any MINUTE level dataset should be treated as 12:30pm
    * @param timeSpec
    * @param dataCompletenessStartTime
-   * @param dateTimeZone
+   * @param zone
    * @return
    */
   public static long getAdjustedTimeForDataset(TimeSpec timeSpec, long dataCompletenessStartTime, DateTimeZone zone) {
@@ -83,31 +85,6 @@ public class DataCompletenessUtils {
     }
     return adjustedDateTime.getMillis();
   }
-
-  /**
-   * get bucket size in millis, according to data granularity of dataset
-   * Bucket size are 1 HOUR for hourly, 1 DAY for daily and 30 MINUTES for minute level
-   * @param timeSpec
-   * @return
-   */
-  public static long getBucketSizeInMSForDataset(TimeSpec timeSpec) {
-    long bucketMillis = 0;
-    TimeUnit unit = timeSpec.getDataGranularity().getUnit();
-    switch (unit) {
-      case DAYS:
-        bucketMillis = TimeUnit.MILLISECONDS.convert(1, TimeUnit.DAYS);
-        break;
-      case MINUTES:
-        bucketMillis = TimeUnit.MILLISECONDS.convert(MINUTES_LEVEL_ROUNDING, TimeUnit.MINUTES);
-        break;
-      case HOURS:
-      default:
-        bucketMillis = TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS);
-        break;
-    }
-    return bucketMillis;
-  }
-
 
   /**
    * Get date time formatter according to granularity of dataset
@@ -142,35 +119,30 @@ public class DataCompletenessUtils {
    * @return
    */
   public static ListMultimap<String, Long> getBucketNameToTimeValuesMap(TimeSpec timeSpec,
-      Map<String, Long> bucketNameToBucketValue) {
+      Map<String, Long> bucketNameToBucketValue, DateTimeZone timeZone) {
     ListMultimap<String, Long> bucketNameToTimeValues = ArrayListMultimap.create();
 
     String timeFormat = timeSpec.getFormat();
+    TimeGranularity granularity = timeSpec.getDataGranularity();
+
     if (timeFormat.equals(TimeSpec.SINCE_EPOCH_FORMAT)) {
-      TimeUnit unit = timeSpec.getDataGranularity().getUnit();
-      int timeDuration = timeSpec.getDataGranularity().getSize();
+      long timeDuration = granularity.toPeriod().toStandardDuration().getMillis();
 
       for (Entry<String, Long> entry : bucketNameToBucketValue.entrySet()) {
         String bucketName = entry.getKey();
-        Long bucketValue = entry.getValue();
-        long timeValue = 0;
+        DateTime bucketValue = new DateTime(entry.getValue(), timeZone);
 
-        switch (unit) {
+        switch (granularity.getUnit()) {
           case MINUTES:
-            for (int i = 0; i < MINUTES_LEVEL_ROUNDING/timeDuration; i++) {
-              timeValue = TimeUnit.MINUTES.convert(bucketValue, TimeUnit.MILLISECONDS) / timeDuration;
-              bucketNameToTimeValues.put(bucketName, timeValue);
-              bucketValue = bucketValue + TimeUnit.MILLISECONDS.convert(timeDuration, TimeUnit.MINUTES);
+            for (int i = 0; i < MINUTES_LEVEL_ROUNDING / timeDuration; i++) {
+              bucketNameToTimeValues.put(bucketName, granularity.fromTimestamp(bucketValue));
+              bucketValue = bucketValue.plus(granularity.toPeriod());
             }
             break;
+
           case DAYS:
-            timeValue = TimeUnit.DAYS.convert(bucketValue, TimeUnit.MILLISECONDS);
-            bucketNameToTimeValues.put(bucketName, timeValue);
-            break;
           case HOURS:
-          default:
-            timeValue = TimeUnit.HOURS.convert(bucketValue, TimeUnit.MILLISECONDS);
-            bucketNameToTimeValues.put(bucketName, timeValue);
+            bucketNameToTimeValues.put(bucketName, granularity.fromTimestamp(bucketValue));
             break;
         }
       }
@@ -187,18 +159,20 @@ public class DataCompletenessUtils {
    * Get count * of buckets
    * @param dataset
    * @param bucketNameToBucketValueMS
-   * @param bucketNameToBucketValue
    * @return
    */
   public static Map<String, Long> getCountsForBucketsOfDataset(String dataset, TimeSpec timeSpec,
       Map<String, Long> bucketNameToBucketValueMS) {
+
+    // NOTE: another ThirdEye-esque hack. This code is to be deprecated, so no value in refactoring it.
+    DateTimeZone timeZone = Utils.getDataTimeZone(dataset);
 
     // get time values according to dataset timeSpec schema (epoch or sdf values in proper granularity)
     // dateToCheckInSDF -> timeValues as present in segments
     // This is a multimap because for nMinutesSinceEpoch, a bucket (30 minutes) can have more than 1 time values in the 30 minutes
     // e.g.: For 5 minutes granularity data, the checker will round to 30 minutes,
     // but count * should be taken from 6 time values in that 30 minutes
-    ListMultimap<String, Long> bucketNameToTimeValues = getBucketNameToTimeValuesMap(timeSpec, bucketNameToBucketValueMS);
+    ListMultimap<String, Long> bucketNameToTimeValues = getBucketNameToTimeValuesMap(timeSpec, bucketNameToBucketValueMS, timeZone);
     LOG.info("Bucket name to time values {}", bucketNameToTimeValues);
 
     Map<String, Long> bucketNameToCountStarMap = getBucketNameToCountStarMap(dataset, timeSpec, bucketNameToTimeValues);

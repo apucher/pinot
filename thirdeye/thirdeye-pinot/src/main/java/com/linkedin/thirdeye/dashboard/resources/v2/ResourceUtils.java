@@ -41,6 +41,8 @@ import java.util.Objects;
 import java.util.regex.Pattern;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.text.StrSubstitutor;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -205,7 +207,8 @@ public class ResourceUtils {
         continue;
       }
 
-      putExternalLinkTimeContext(mergedAnomaly.getStartTime(), mergedAnomaly.getEndTime(), sourceName, context, externalLinkTimeGranularity);
+      putExternalLinkTimeContext(mergedAnomaly.getStartTime(), mergedAnomaly.getEndTime(), sourceName, context,
+          externalLinkTimeGranularity, DateTimeZone.forID(datasetConfigDTO.getTimezone()));
 
       StrSubstitutor strSubstitutor = new StrSubstitutor(context);
       String result = strSubstitutor.replace(urlTemplate);
@@ -263,7 +266,8 @@ public class ResourceUtils {
         continue;
       }
 
-      putExternalLinkTimeContext(slice.getStart(), slice.getEnd(), sourceName, context, externalLinkTimeGranularity);
+      putExternalLinkTimeContext(slice.getStart(), slice.getEnd(), sourceName, context, externalLinkTimeGranularity,
+          DateTimeZone.forID(datasetConfigDTO.getTimezone()));
 
       StrSubstitutor strSubstitutor = new StrSubstitutor(context);
       String result = strSubstitutor.replace(urlTemplate);
@@ -314,14 +318,15 @@ public class ResourceUtils {
    * @param linkName the name of the external link.
    * @param context the context to be updated, which is used by StrSubstitutor.
    * @param externalLinkTimeGranularity the granularity of the external link.
+   * @param timeZone timezone for timestamp translation
    */
   private static void putExternalLinkTimeContext(long startTime, long endTime, String linkName,
-      Map<String, String> context, Map<String, String> externalLinkTimeGranularity) {
+      Map<String, String> context, Map<String, String> externalLinkTimeGranularity, DateTimeZone timeZone) {
     if (MapUtils.isNotEmpty(externalLinkTimeGranularity) && externalLinkTimeGranularity.containsKey(linkName)) {
       String timeGranularityString = externalLinkTimeGranularity.get(linkName);
       TimeGranularity timeGranularity = TimeGranularity.fromString(timeGranularityString);
-      context.put(MetricConfigBean.URL_TEMPLATE_START_TIME, String.valueOf(timeGranularity.convertToUnit(startTime)));
-      context.put(MetricConfigBean.URL_TEMPLATE_END_TIME, String.valueOf(timeGranularity.convertToUnit(endTime)));
+      context.put(MetricConfigBean.URL_TEMPLATE_START_TIME, String.valueOf(timeGranularity.fromTimestamp(new DateTime(startTime, timeZone))));
+      context.put(MetricConfigBean.URL_TEMPLATE_END_TIME, String.valueOf(timeGranularity.fromTimestamp(new DateTime(endTime, timeZone))));
     } else { // put start and end time as is
       context.put(MetricConfigBean.URL_TEMPLATE_START_TIME, String.valueOf(startTime));
       context.put(MetricConfigBean.URL_TEMPLATE_END_TIME, String.valueOf(endTime));

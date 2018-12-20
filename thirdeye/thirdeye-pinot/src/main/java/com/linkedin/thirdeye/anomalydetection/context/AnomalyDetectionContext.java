@@ -18,12 +18,15 @@ package com.linkedin.thirdeye.anomalydetection.context;
 
 import com.linkedin.thirdeye.anomalydetection.function.AnomalyDetectionFunction;
 import com.linkedin.thirdeye.anomalydetection.model.prediction.PredictionModel;
+import com.linkedin.thirdeye.api.TimeGranularity;
 import com.linkedin.thirdeye.datalayer.dto.MergedAnomalyResultDTO;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.joda.time.Period;
+
 
 /**
  * The context for performing an anomaly detection on the sets of time series from the same
@@ -35,7 +38,7 @@ public class AnomalyDetectionContext {
   private AnomalyDetectionFunction anomalyDetectionFunction;
 
   private TimeSeriesKey timeSeriesKey;
-  private long bucketSizeInMS; // the bucket size, gap between timestamps, in millisecond
+  private TimeGranularity bucketSize; // the bucket size, gap between timestamps, in millisecond
 
   private Map<String, TimeSeries> current = new HashMap<>();
   private Map<String, List<TimeSeries>> baselines = new HashMap<>();
@@ -106,17 +109,17 @@ public class AnomalyDetectionContext {
   }
 
   /**
-   * Returns the bucket size, the gap between timestamps, in milliseconds.
+   * Returns the bucket size, the gap between timestamps
    */
-  public long getBucketSizeInMS() {
-    return bucketSizeInMS;
+  public TimeGranularity getBucketSize() {
+    return bucketSize;
   }
 
   /**
-   * Sets the bucket size, the gap between timestamps, in milliseconds.
+   * Sets the bucket size, the gap between timestamps
    */
-  public void setBucketSizeInMS(long bucketSizeInMS) {
-    this.bucketSizeInMS = bucketSizeInMS;
+  public void setBucketSize(TimeGranularity bucketSize) {
+    this.bucketSize = bucketSize;
   }
 
   /**

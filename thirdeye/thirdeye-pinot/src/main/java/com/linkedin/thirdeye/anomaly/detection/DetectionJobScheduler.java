@@ -43,7 +43,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.joda.time.DateTime;
@@ -80,7 +79,7 @@ public class DetectionJobScheduler implements Runnable {
   private final long MAXIMAL_WAIT_SECONDS = 600;
 
   public void start() throws SchedulerException {
-    scheduledExecutorService.scheduleWithFixedDelay(this, 0, 5, TimeUnit.MINUTES);
+    scheduledExecutorService.scheduleWithFixedDelay(this, 0, 5, java.util.concurrent.TimeUnit.MINUTES);
   }
 
   public void shutdown() {
@@ -150,8 +149,8 @@ public class DetectionJobScheduler implements Runnable {
 
             long dateToCheck = detectionStatus.getDateToCheckInMS();
             // check availability for monitoring window - delay
-            long endTime = dateToCheck - TimeUnit.MILLISECONDS.convert(anomalyFunction.getWindowDelay(), anomalyFunction.getWindowDelayUnit());
-            long startTime = endTime - TimeUnit.MILLISECONDS.convert(anomalyFunction.getWindowSize(), anomalyFunction.getWindowUnit());
+            long endTime = dateToCheck - java.util.concurrent.TimeUnit.MILLISECONDS.convert(anomalyFunction.getWindowDelay(), anomalyFunction.getWindowDelayUnit().toJavaUnit());
+            long startTime = endTime - java.util.concurrent.TimeUnit.MILLISECONDS.convert(anomalyFunction.getWindowSize(), anomalyFunction.getWindowUnit().toJavaUnit());
             LOG.info("Function: {} Dataset: {} Checking start:{} {} to end:{} {}", functionId, dataset, startTime, new DateTime(startTime, dateTimeZone), endTime, new DateTime(endTime, dateTimeZone));
 
             boolean pass = checkIfDetectionRunCriteriaMet(startTime, endTime, datasetConfig, anomalyFunction);
@@ -387,7 +386,7 @@ public class DetectionJobScheduler implements Runnable {
         return null;
       }
 
-      long monitoringWindowSize = TimeUnit.MILLISECONDS.convert(anomalyFunction.getWindowSize(), anomalyFunction.getWindowUnit());
+      long monitoringWindowSize = java.util.concurrent.TimeUnit.MILLISECONDS.convert(anomalyFunction.getWindowSize(), anomalyFunction.getWindowUnit().toJavaUnit());
       DateTime currentStart;
       if (force) {
         currentStart = backfillStartTime;
@@ -482,7 +481,7 @@ public class DetectionJobScheduler implements Runnable {
     JobDTO jobDTO;
     List<TaskDTO> scheduledTaskDTO = taskDAO.findByJobIdStatusNotIn(jobExecutionId, TaskStatus.COMPLETED);
     long functionId = jobDAO.findById(jobExecutionId).getConfigId();
-    long jobCheckEndTime = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(MAXIMAL_WAIT_SECONDS);
+    long jobCheckEndTime = System.currentTimeMillis() + java.util.concurrent.TimeUnit.SECONDS.toMillis(MAXIMAL_WAIT_SECONDS);
     while (scheduledTaskDTO.size() > 0 && System.currentTimeMillis() <= jobCheckEndTime) {
       for (TaskDTO taskDTO : scheduledTaskDTO) {
         if (taskDTO.getStatus() == TaskStatus.FAILED) {
@@ -492,7 +491,7 @@ public class DetectionJobScheduler implements Runnable {
       }
 
       try {
-        TimeUnit.SECONDS.sleep(SYNC_SLEEP_SECONDS);
+        java.util.concurrent.TimeUnit.SECONDS.sleep(SYNC_SLEEP_SECONDS);
       } catch (InterruptedException e) {
         LOG.warn("The monitoring thread for anomaly function {} (task id: {}) backfill is awakened.", functionId,
             jobExecutionId);

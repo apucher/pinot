@@ -17,8 +17,8 @@
 package com.linkedin.thirdeye.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Preconditions;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.DurationFieldType;
@@ -26,7 +26,7 @@ import org.joda.time.Period;
 import org.joda.time.PeriodType;
 
 
-public class TimeGranularity {
+public class TimeGranularity implements Comparable<TimeGranularity> {
   private final int size;
   private final TimeUnit unit;
 
@@ -63,42 +63,34 @@ public class TimeGranularity {
    * @return the equivalent milliseconds of this time granularity.
    */
   public long toMillis() {
-    return toMillis(1);
-  }
-
-  /**
-   * Returns the equivalent milliseconds of the specified number of this time granularity. Highly suggested to use
-   * toPeriod instead of this method for handling daylight saving time issue.
-   *
-   * @param number the specified number of this time granularity.
-   *
-   * @return the equivalent milliseconds of the specified number of this time granularity.
-   */
-  public long toMillis(long number) {
-    return unit.toMillis(number * size);
+    // fix semantics
+    throw new IllegalStateException("not implemented yet");
   }
 
   /**
    * Returns the equivalent milliseconds of the specified number of this time granularity,
    * given a time zone.
    *
-   * @param number the specified number of this time granularity.
+   * @param epochOffset the specified number of this time granularity.
    * @param timeZone the time zone to base the timestamp off of
    * @return the timestamp in millis
    */
-  public long toMillis(long number, DateTimeZone timeZone) {
-    if (number > Integer.MAX_VALUE) {
+  public long toTimestamp(long epochOffset, DateTimeZone timeZone) {
+    if (epochOffset > Integer.MAX_VALUE) {
+      // special handling for large epoch offsets
       switch (this.getUnit()) {
         case MILLISECONDS:
-          return number;
+          return epochOffset;
         case SECONDS:
-          return number * 1000;
+          return epochOffset * 1000;
+        case MINUTES:
+          return epochOffset * 60000;
         default:
           throw new IllegalArgumentException("epoch offset too large");
       }
     }
 
-    return new DateTime(0, timeZone).plus(this.toPeriod((int) number)).getMillis();
+    return new DateTime(0, timeZone).plus(this.toPeriod((int) epochOffset)).getMillis();
   }
 
   /**
@@ -113,13 +105,19 @@ public class TimeGranularity {
   /**
    * Returns an equivalent Period object of the specified number of this time granularity.
    *
-   * @param number the specified number of this time granularity.
+   * @param epochOffset the specified number of this time granularity.
    *
    * @return an equivalent Period object of the specified number of this time granularity.
    */
-  public Period toPeriod(int number) {
-    int size = this.size * number;
+  public Period toPeriod(int epochOffset) {
+    int size = this.size * epochOffset;
     switch (unit) {
+      case YEARS:
+        return new Period().withPeriodType(PeriodType.years()).withField(DurationFieldType.years(), size);
+      case MONTHS:
+        return new Period().withPeriodType(PeriodType.months()).withField(DurationFieldType.months(), size);
+      case WEEKS:
+        return new Period().withPeriodType(PeriodType.weeks()).withField(DurationFieldType.weeks(), size);
       case DAYS:
         return new Period().withPeriodType(PeriodType.days()).withField(DurationFieldType.days(), size);
       case HOURS:
@@ -137,17 +135,22 @@ public class TimeGranularity {
   /**
    * Converts millis to time unit
    * e.g. If TimeGranularity is defined as 1 HOURS,
-   * and we invoke convertToUnit(1458284400000) (i.e. 2016-03-18 00:00:00)
+   * and we invoke fromTimestamp(1458284400000) (i.e. 2016-03-18 00:00:00)
    * this method will return HOURS.convert(1458284400000, MILLISECONDS)/1 = 405079 hoursSinceEpoch
    * If TimeGranularity is defined as 10 MINUTES,
-   * and we invoke convertToUnit(1458284400000) (i.e. 2016-03-18 00:00:00)
+   * and we invoke fromTimestamp(1458284400000) (i.e. 2016-03-18 00:00:00)
    * this method will return MINUTES.convert(1458284400000, MILLISECONDS)/10 = 2430474
    * tenMinutesSinceEpoch
-   * @param millis
+   * @param datetime timestamp with time zone information
    * @return
    */
-  public long convertToUnit(long millis) {
-    return unit.convert(millis, TimeUnit.MILLISECONDS) / size;
+  public long fromTimestamp(DateTime datetime) {
+    Period period = this.toPeriod();
+    DateTime origin = new DateTime(0, datetime.getZone());
+    while(!origin.plus(period).isAfter(datetime)) {
+      origin = origin.plus(period);
+    }
+    return origin.getMillis();
   }
 
   /**
@@ -183,6 +186,7 @@ public class TimeGranularity {
    */
   @Override
   public String toString() {
+    // clean up later, like toAggregationGranularityString()
     return size + "-" + unit;
   }
 
@@ -198,5 +202,16 @@ public class TimeGranularity {
     }
     TimeGranularity other = (TimeGranularity) obj;
     return Objects.equals(other.size, this.size) && Objects.equals(other.unit, this.unit);
+  }
+
+  @Override
+  public int compareTo(TimeGranularity o) {
+    return (int) Math.signum(this.toPeriod().getMillis() - o.toPeriod().getMillis());
+  }
+
+  public static int compare(TimeGranularity a, TimeGranularity b) {
+    Preconditions.checkNotNull(a);
+    Preconditions.checkNotNull(b);
+    return a.compareTo(b);
   }
 }

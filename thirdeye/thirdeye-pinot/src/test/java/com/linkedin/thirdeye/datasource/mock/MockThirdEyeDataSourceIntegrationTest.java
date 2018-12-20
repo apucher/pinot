@@ -18,6 +18,7 @@ package com.linkedin.thirdeye.datasource.mock;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
+import com.linkedin.thirdeye.api.TimeUnit;
 import com.linkedin.thirdeye.common.ThirdEyeConfiguration;
 import com.linkedin.thirdeye.dataframe.DataFrame;
 import com.linkedin.thirdeye.dataframe.util.DataFrameUtils;
@@ -34,7 +35,6 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.concurrent.TimeUnit;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -142,7 +142,7 @@ public class MockThirdEyeDataSourceIntegrationTest {
 
   @Test
   public void testBreakdown() throws Exception {
-    MetricSlice slice = MetricSlice.from(this.metricRevenueId, this.timestamp - TimeUnit.HOURS.toMillis(25), this.timestamp); // allow for DST
+    MetricSlice slice = MetricSlice.from(this.metricRevenueId, this.timestamp - java.util.concurrent.TimeUnit.HOURS.toMillis(25), this.timestamp); // allow for DST
     RequestContainer requestContainer = DataFrameUtils.makeAggregateRequest(slice, Arrays.asList("country", "browser"), -1, "ref");
     ThirdEyeResponse response = this.cacheRegistry.getQueryCache().getQueryResult(requestContainer.getRequest());
     DataFrame df = DataFrameUtils.evaluateResponse(response, requestContainer);

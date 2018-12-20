@@ -52,10 +52,11 @@ public class MinMaxThresholdDetectionModel extends AbstractDetectionModel {
     for (long time : timeSeries.timestampSet()) {
       averageValue += timeSeries.get(time);
     }
+    // hack, use timezone and period instead
+    long bucketSizeInMillis = anomalyDetectionContext.getBucketSize().toPeriod().toStandardDuration().getMillis();
     // Compute the bucket size, so we can iterate in those steps
-    long bucketMillis = anomalyDetectionContext.getBucketSizeInMS();
     Interval timeSeriesInterval = timeSeries.getTimeSeriesInterval();
-    long numBuckets = Math.abs(timeSeriesInterval.getEndMillis() - timeSeriesInterval.getStartMillis()) / bucketMillis;
+    long numBuckets = Math.abs(timeSeriesInterval.getEndMillis() - timeSeriesInterval.getStartMillis()) / bucketSizeInMillis;
 
     // avg value of this time series
     averageValue /= numBuckets;
@@ -69,7 +70,7 @@ public class MinMaxThresholdDetectionModel extends AbstractDetectionModel {
         AnomalyResult anomalyResult = new RawAnomalyResult();
         anomalyResult.setProperties(ThirdEyeUtils.propertiesToStringMap(getProperties()));
         anomalyResult.setStartTime(timeBucket);
-        anomalyResult.setEndTime(timeBucket + bucketMillis); // point-in-time
+        anomalyResult.setEndTime(timeBucket + bucketSizeInMillis); // point-in-time
         anomalyResult.setDimensions(dimensionMap);
         anomalyResult.setScore(averageValue);
         anomalyResult.setWeight(deviationFromThreshold); // higher change, higher the severity

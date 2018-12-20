@@ -29,10 +29,10 @@ import com.linkedin.thirdeye.anomaly.task.TaskInfo;
 import com.linkedin.thirdeye.anomaly.task.TaskResult;
 import com.linkedin.thirdeye.anomaly.task.TaskRunner;
 import com.linkedin.thirdeye.anomalydetection.context.AnomalyResult;
-import com.linkedin.thirdeye.anomalydetection.context.RawAnomalyResult;
 import com.linkedin.thirdeye.api.DimensionMap;
 import com.linkedin.thirdeye.api.MetricTimeSeries;
 import com.linkedin.thirdeye.api.TimeGranularity;
+import com.linkedin.thirdeye.api.TimeUnit;
 import com.linkedin.thirdeye.datalayer.bao.AnomalyFunctionManager;
 import com.linkedin.thirdeye.datalayer.bao.ClassificationConfigManager;
 import com.linkedin.thirdeye.datalayer.bao.MergedAnomalyResultManager;
@@ -54,7 +54,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
-import java.util.concurrent.TimeUnit;
 import org.apache.commons.collections.CollectionUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -367,7 +366,8 @@ public class ClassificationTaskRunner implements TaskRunner {
     Integer detectionWindowSize = anomalyFunctionSpec.getWindowSize();
     TimeUnit detectionWindowUnit = anomalyFunctionSpec.getWindowUnit();
     TimeGranularity minDetectionWindowSize = new TimeGranularity(detectionWindowSize, detectionWindowUnit);
-    if (monitoringWindowEnd - monitoringWindowStart < minDetectionWindowSize.toMillis()) {
+
+    if (monitoringWindowEnd - monitoringWindowStart < minDetectionWindowSize.toPeriod().toStandardDuration().getMillis()) { // TODO: check if necessary
       windowStart = windowEnd.minus(minDetectionWindowSize.toPeriod());
     }
 

@@ -46,6 +46,7 @@ import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
+import org.joda.time.Period;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
@@ -251,15 +252,15 @@ public class PqlUtils {
   static String getBetweenClause(DateTime start, DateTime endExclusive, TimeSpec timeFieldSpec, String dataset)
       throws ExecutionException {
     TimeGranularity dataGranularity = timeFieldSpec.getDataGranularity();
-    long dataGranularityMillis = dataGranularity.toMillis();
 
     String timeField = timeFieldSpec.getColumnName();
     String timeFormat = timeFieldSpec.getFormat();
 
     // epoch case
     if (timeFormat == null || TimeSpec.SINCE_EPOCH_FORMAT.equals(timeFormat)) {
-      long startUnits = (long) Math.ceil(start.getMillis() / (double) dataGranularityMillis);
-      long endUnits = (long) Math.ceil(endExclusive.getMillis() / (double) dataGranularityMillis);
+      Period roundingPeriod = dataGranularity.toPeriod().minusMillis(1);
+      long startUnits = dataGranularity.fromTimestamp(start.plus(roundingPeriod));
+      long endUnits = dataGranularity.fromTimestamp(endExclusive.plus(roundingPeriod));
 
       // point query
       if (startUnits == endUnits) {

@@ -16,12 +16,12 @@
 
 package com.linkedin.thirdeye.completeness.checker;
 
+import com.linkedin.thirdeye.api.TimeUnit;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.TimeUnit;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -87,36 +87,6 @@ public class DataCompletenessUtilsTest {
   }
 
   @Test
-  public void testGetBucketSizeForDataset() throws Exception {
-    String columnName = "Date";
-    // DAYS bucket
-    TimeGranularity timeGranularity = new TimeGranularity(1, TimeUnit.DAYS);
-    String timeFormat = TimeSpec.SINCE_EPOCH_FORMAT;
-    TimeSpec timeSpec = new TimeSpec(columnName, timeGranularity, timeFormat);
-    long bucketSize = DataCompletenessUtils.getBucketSizeInMSForDataset(timeSpec);
-    Assert.assertEquals(bucketSize, 24*60*60_000);
-
-    // HOURS bucket
-    timeGranularity = new TimeGranularity(1, TimeUnit.HOURS);
-    timeSpec = new TimeSpec(columnName, timeGranularity, timeFormat);
-    bucketSize = DataCompletenessUtils.getBucketSizeInMSForDataset(timeSpec);
-    Assert.assertEquals(bucketSize, 60*60_000);
-
-    // MINUTES returns 30 MINUTES bucket
-    timeGranularity = new TimeGranularity(1, TimeUnit.MINUTES);
-    timeSpec = new TimeSpec(columnName, timeGranularity, timeFormat);
-    bucketSize = DataCompletenessUtils.getBucketSizeInMSForDataset(timeSpec);
-    Assert.assertEquals(bucketSize, 30*60_000);
-
-    // DEFAULT bucket
-    timeGranularity = new TimeGranularity(1, TimeUnit.MILLISECONDS);
-    timeSpec = new TimeSpec(columnName, timeGranularity, timeFormat);
-    bucketSize = DataCompletenessUtils.getBucketSizeInMSForDataset(timeSpec);
-    Assert.assertEquals(bucketSize, 60*60_000);
-
-  }
-
-  @Test
   public void testGetDateTimeFormatterForDataset() {
 
     DateTimeZone zone = DateTimeZone.UTC;
@@ -178,7 +148,7 @@ public class DataCompletenessUtilsTest {
     expectedValues.put("20170112", 20170112L);
     expectedValues.put("20170113", 20170113L);
     expectedValues.put("20170114", 20170114L);
-    ListMultimap<String,Long> bucketNameToTimeValuesMap = DataCompletenessUtils.getBucketNameToTimeValuesMap(timeSpec, bucketNameToBucketValue);
+    ListMultimap<String,Long> bucketNameToTimeValuesMap = DataCompletenessUtils.getBucketNameToTimeValuesMap(timeSpec, bucketNameToBucketValue, zone);
     for (Entry<String, Long> entry : bucketNameToTimeValuesMap.entries()) {
       String bucketName = entry.getKey();
       Assert.assertEquals(entry.getValue(), expectedValues.get(bucketName));
@@ -200,7 +170,7 @@ public class DataCompletenessUtilsTest {
     expectedValues.put("2017011200", 412272L); // hours since epoch values
     expectedValues.put("2017011201", 412273L);
     expectedValues.put("2017011202", 412274L);
-    bucketNameToTimeValuesMap = DataCompletenessUtils.getBucketNameToTimeValuesMap(timeSpec, bucketNameToBucketValue);
+    bucketNameToTimeValuesMap = DataCompletenessUtils.getBucketNameToTimeValuesMap(timeSpec, bucketNameToBucketValue, zone);
     for (Entry<String, Long> entry : bucketNameToTimeValuesMap.entries()) {
       String bucketName = entry.getKey();
       Assert.assertEquals(entry.getValue(), expectedValues.get(bucketName));
@@ -220,7 +190,7 @@ public class DataCompletenessUtilsTest {
     expectedValuesList.put("201701120100", Lists.newArrayList(2473638L, 2473639L, 2473640L));
     expectedValuesList.put("201701120130", Lists.newArrayList(2473641L, 2473642L, 2473643L));
 
-    bucketNameToTimeValuesMap = DataCompletenessUtils.getBucketNameToTimeValuesMap(timeSpec, bucketNameToBucketValue);
+    bucketNameToTimeValuesMap = DataCompletenessUtils.getBucketNameToTimeValuesMap(timeSpec, bucketNameToBucketValue, zone);
     for (String bucketName : bucketNameToTimeValuesMap.keySet()) {
       List<Long> timeValues = bucketNameToTimeValuesMap.get(bucketName);
       Collections.sort(timeValues);

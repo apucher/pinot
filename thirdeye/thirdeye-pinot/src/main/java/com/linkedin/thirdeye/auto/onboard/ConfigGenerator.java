@@ -16,11 +16,11 @@
 
 package com.linkedin.thirdeye.auto.onboard;
 
+import com.linkedin.thirdeye.api.TimeUnit;
 import com.linkedin.thirdeye.datalayer.pojo.MetricConfigBean;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import com.linkedin.pinot.common.data.MetricFieldSpec;
 import com.linkedin.pinot.common.data.Schema;
@@ -42,9 +42,9 @@ public class ConfigGenerator {
   public static void setTimeSpecs(DatasetConfigDTO datasetConfigDTO, TimeGranularitySpec timeSpec) {
     datasetConfigDTO.setTimeColumn(timeSpec.getName());
     datasetConfigDTO.setTimeDuration(timeSpec.getTimeUnitSize());
-    datasetConfigDTO.setTimeUnit(timeSpec.getTimeType());
+    datasetConfigDTO.setTimeUnit(TimeUnit.valueOf(timeSpec.getTimeType()));
     datasetConfigDTO.setTimeFormat(timeSpec.getTimeFormat());
-    datasetConfigDTO.setExpectedDelay(getExpectedDelayFromTimeunit(timeSpec.getTimeType()));
+    datasetConfigDTO.setExpectedDelay(getExpectedDelayFromTimeunit(TimeUnit.valueOf(timeSpec.getTimeType())));
     if (timeSpec.getTimeFormat().startsWith(TimeFormat.SIMPLE_DATE_FORMAT.toString())) {
       datasetConfigDTO.setTimezone(PDT_TIMEZONE);
     }

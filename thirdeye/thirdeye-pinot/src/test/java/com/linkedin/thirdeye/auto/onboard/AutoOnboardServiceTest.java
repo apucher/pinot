@@ -18,8 +18,8 @@ package com.linkedin.thirdeye.auto.onboard;
 
 import com.linkedin.thirdeye.anomaly.ThirdEyeAnomalyConfiguration;
 import com.linkedin.thirdeye.api.TimeGranularity;
+import com.linkedin.thirdeye.api.TimeUnit;
 import java.net.URL;
-import java.util.concurrent.TimeUnit;
 import org.testng.annotations.Test;
 
 

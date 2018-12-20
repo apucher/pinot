@@ -229,7 +229,7 @@ public class DetectionMigrationResource {
   }
 
   private String getBucketPeriod(AnomalyFunctionDTO functionDTO) {
-    return new Period(TimeUnit.MILLISECONDS.convert(functionDTO.getBucketSize(), functionDTO.getBucketUnit())).toString();
+    return new Period(TimeUnit.MILLISECONDS.convert(functionDTO.getBucketSize(), functionDTO.getBucketUnit().toJavaUnit())).toString();
   }
 
   private Map<String, Object> getPercentageChangeRuleDetectorParams(AnomalyFunctionDTO functionDTO) throws IOException {

@@ -69,7 +69,8 @@ public class AnomalyRemovalFunction extends AbstractTransformationFunction {
     long startTime = timeSeriesInterval.getStartMillis();
     long endTime = timeSeriesInterval.getEndMillis();
 
-    long bucketSizeInMillis = anomalyDetectionContext.getBucketSizeInMS();
+    // hack, use timezone and period instead
+    long bucketSizeInMillis = anomalyDetectionContext.getBucketSize().toPeriod().toStandardDuration().getMillis();
 
     // get monitoring window
     String metricName = anomalyDetectionContext.getAnomalyDetectionFunction().getSpec().getTopicMetric();

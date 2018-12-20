@@ -16,9 +16,9 @@
 
 package com.linkedin.thirdeye.anomaly.monitor;
 
-import java.util.concurrent.TimeUnit;
-
 import com.linkedin.thirdeye.api.TimeGranularity;
+import com.linkedin.thirdeye.api.TimeUnit;
+
 
 public class MonitorConstants {
   public enum MonitorType {

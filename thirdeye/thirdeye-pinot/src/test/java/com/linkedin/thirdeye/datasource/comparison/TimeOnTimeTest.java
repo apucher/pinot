@@ -16,12 +16,12 @@
 
 package com.linkedin.thirdeye.datasource.comparison;
 
+import com.linkedin.thirdeye.api.TimeUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 import org.joda.time.DateTime;
 

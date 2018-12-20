@@ -16,7 +16,6 @@
 
 package com.linkedin.thirdeye.anomalydetection.model.prediction;
 
-import com.linkedin.thirdeye.anomalydetection.AnomalyDetectionUtils;
 import com.linkedin.thirdeye.anomalydetection.context.AnomalyDetectionContext;
 import com.linkedin.thirdeye.anomalydetection.context.TimeSeries;
 import java.util.List;
@@ -34,7 +33,8 @@ public class SeasonalAveragePredictionModel extends ExpectedTimeSeriesPrediction
       TimeSeries baseTimeSeries = getLatestTimeSeries(baselineTimeSeries);
       Interval baseInterval = baseTimeSeries.getTimeSeriesInterval();
 
-      long bucketSizeInMillis = anomalyDetectionContext.getBucketSizeInMS();
+      // hack, use timezone and period instead
+      long bucketSizeInMillis = anomalyDetectionContext.getBucketSize().toPeriod().toStandardDuration().getMillis();
 
       long baseStart = baseInterval.getStartMillis();
       long baseEnd = baseInterval.getEndMillis();

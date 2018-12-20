@@ -16,11 +16,11 @@
 
 package com.linkedin.thirdeye.datasource;
 
+import com.linkedin.thirdeye.api.TimeUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import org.joda.time.DateTime;
 import org.testng.Assert;
@@ -29,7 +29,6 @@ import org.testng.annotations.Test;
 
 import com.google.common.collect.Range;
 import com.linkedin.thirdeye.api.TimeGranularity;
-import com.linkedin.thirdeye.datasource.TimeRangeUtils;
 
 public class TestTimeRangeUtils {
 

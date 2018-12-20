@@ -59,7 +59,7 @@ public class MonitorJobScheduler {
     monitorJobRunner = new MonitorJobRunner(monitorJobContext);
     scheduledExecutorService
       .scheduleWithFixedDelay(monitorJobRunner, 0, monitorConfiguration.getMonitorFrequency().getSize(),
-          monitorConfiguration.getMonitorFrequency().getUnit());
+          monitorConfiguration.getMonitorFrequency().getUnit().toJavaUnit());
   }
 
   public void shutdown() {

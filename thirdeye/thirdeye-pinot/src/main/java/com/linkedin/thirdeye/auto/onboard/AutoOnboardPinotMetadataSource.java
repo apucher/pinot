@@ -22,6 +22,7 @@ import com.google.common.collect.Lists;
 import com.linkedin.pinot.common.data.MetricFieldSpec;
 import com.linkedin.pinot.common.data.Schema;
 import com.linkedin.pinot.common.data.TimeGranularitySpec;
+import com.linkedin.thirdeye.api.TimeUnit;
 import com.linkedin.thirdeye.datalayer.bao.AlertConfigManager;
 import com.linkedin.thirdeye.datalayer.bao.DatasetConfigManager;
 import com.linkedin.thirdeye.datalayer.bao.MetricConfigManager;
@@ -335,7 +336,7 @@ public class AutoOnboardPinotMetadataSource extends AutoOnboard {
     TimeGranularitySpec timeSpec = schema.getTimeFieldSpec().getOutgoingGranularitySpec();
     if (!datasetConfig.getTimeColumn().equals(timeSpec.getName())
         || !datasetConfig.getTimeFormat().equals(timeSpec.getTimeFormat())
-        || datasetConfig.bucketTimeGranularity().getUnit() != timeSpec.getTimeType()
+        || datasetConfig.bucketTimeGranularity().getUnit() != TimeUnit.valueOf(timeSpec.getTimeType())
         || datasetConfig.bucketTimeGranularity().getSize() != timeSpec.getTimeUnitSize()) {
       ConfigGenerator.setTimeSpecs(datasetConfig, timeSpec);
       DAO_REGISTRY.getDatasetConfigDAO().update(datasetConfig);

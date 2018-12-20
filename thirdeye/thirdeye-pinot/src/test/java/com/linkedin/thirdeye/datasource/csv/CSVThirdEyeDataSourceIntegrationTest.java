@@ -16,6 +16,7 @@
 
 package com.linkedin.thirdeye.datasource.csv;
 
+import com.linkedin.thirdeye.api.TimeUnit;
 import com.linkedin.thirdeye.common.ThirdEyeConfiguration;
 import com.linkedin.thirdeye.dataframe.DataFrame;
 import com.linkedin.thirdeye.dataframe.util.DataFrameUtils;
@@ -29,7 +30,6 @@ import com.linkedin.thirdeye.datasource.ThirdEyeCacheRegistry;
 import com.linkedin.thirdeye.datasource.ThirdEyeResponse;
 import java.net.URL;
 import java.util.Collections;
-import java.util.concurrent.TimeUnit;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;

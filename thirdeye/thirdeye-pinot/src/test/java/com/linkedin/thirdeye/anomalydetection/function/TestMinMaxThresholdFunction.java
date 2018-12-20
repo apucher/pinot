@@ -23,12 +23,13 @@ import com.linkedin.thirdeye.anomalydetection.context.TimeSeries;
 import com.linkedin.thirdeye.anomalydetection.context.TimeSeriesKey;
 import com.linkedin.thirdeye.anomalydetection.model.detection.MinMaxThresholdDetectionModel;
 import com.linkedin.thirdeye.api.DimensionMap;
+import com.linkedin.thirdeye.api.TimeGranularity;
+import com.linkedin.thirdeye.api.TimeUnit;
 import com.linkedin.thirdeye.datalayer.dto.AnomalyFunctionDTO;
 import com.linkedin.thirdeye.datalayer.dto.MergedAnomalyResultDTO;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-import java.util.concurrent.TimeUnit;
 import org.joda.time.Interval;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
@@ -37,7 +38,7 @@ import org.testng.annotations.Test;
 public class TestMinMaxThresholdFunction {
   private final static double EPSILON = 0.00001d;
 
-  private final static long bucketMillis = TimeUnit.SECONDS.toMillis(1);
+  private final static long bucketMillis = java.util.concurrent.TimeUnit.SECONDS.toMillis(1);
   private final static long observedStartTime = 1000;
 
   private final static String mainMetric = "testMetric";
@@ -46,7 +47,7 @@ public class TestMinMaxThresholdFunction {
   public Object[][] timeSeriesDataProvider() {
     // The properties for the testing time series
     Properties properties = new Properties();
-    long bucketSizeInMS = TimeUnit.SECONDS.toMillis(1);
+    long bucketSizeInMS = java.util.concurrent.TimeUnit.SECONDS.toMillis(1);
 
     // Set up time series key for the testing time series
     TimeSeriesKey timeSeriesKey = new TimeSeriesKey();
@@ -76,7 +77,7 @@ public class TestMinMaxThresholdFunction {
   public void analyze(Properties properties, TimeSeriesKey timeSeriesKey, long bucketSizeInMs,
       TimeSeries observedTimeSeries) throws Exception {
     AnomalyDetectionContext anomalyDetectionContext = new AnomalyDetectionContext();
-    anomalyDetectionContext.setBucketSizeInMS(bucketSizeInMs);
+    anomalyDetectionContext.setBucketSize(new TimeGranularity((int) bucketSizeInMs, TimeUnit.MILLISECONDS));
 
     properties.put(MinMaxThresholdDetectionModel.MAX_VAL, "20");
     properties.put(MinMaxThresholdDetectionModel.MIN_VAL, "12");
@@ -138,7 +139,7 @@ public class TestMinMaxThresholdFunction {
       long bucketSizeInMs, TimeSeries observedTimeSeries) throws Exception {
 
     AnomalyDetectionContext anomalyDetectionContext = new AnomalyDetectionContext();
-    anomalyDetectionContext.setBucketSizeInMS(bucketSizeInMs);
+    anomalyDetectionContext.setBucketSize(new TimeGranularity((int) bucketSizeInMs, TimeUnit.MILLISECONDS));
 
     properties.put(MinMaxThresholdDetectionModel.MAX_VAL, "20");
     properties.put(MinMaxThresholdDetectionModel.MIN_VAL, "12");

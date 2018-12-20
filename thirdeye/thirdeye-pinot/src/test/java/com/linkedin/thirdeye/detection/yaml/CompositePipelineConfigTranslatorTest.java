@@ -2,6 +2,7 @@ package com.linkedin.thirdeye.detection.yaml;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
+import com.linkedin.thirdeye.api.TimeUnit;
 import com.linkedin.thirdeye.datalayer.dto.DatasetConfigDTO;
 import com.linkedin.thirdeye.datalayer.dto.MetricConfigDTO;
 import com.linkedin.thirdeye.detection.DataProvider;
@@ -12,7 +13,6 @@ import com.linkedin.thirdeye.detection.components.ThresholdRuleAnomalyFilter;
 import com.linkedin.thirdeye.detection.components.ThresholdRuleDetector;
 import java.util.Collections;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;

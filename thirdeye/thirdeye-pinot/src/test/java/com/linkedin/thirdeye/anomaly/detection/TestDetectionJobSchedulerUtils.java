@@ -16,8 +16,8 @@
 
 package com.linkedin.thirdeye.anomaly.detection;
 
+import com.linkedin.thirdeye.api.TimeUnit;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;

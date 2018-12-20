@@ -94,7 +94,7 @@ public class PinotDataSourceMaxTime {
         // endTime + 1 to make sure we cover the time range of that time value.
         String timeFormat = timeSpec.getFormat();
         if (StringUtils.isBlank(timeFormat) || TimeSpec.SINCE_EPOCH_FORMAT.equals(timeFormat)) {
-          maxTime = timeSpec.getDataGranularity().toMillis(endTime + 1, timeZone) - 1;
+          maxTime = timeSpec.getDataGranularity().toTimestamp(endTime + 1, timeZone) - 1;
         } else {
           DateTimeFormatter inputDataDateTimeFormatter =
               DateTimeFormat.forPattern(timeFormat).withZone(timeZone);

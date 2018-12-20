@@ -16,19 +16,14 @@
 
 package com.linkedin.thirdeye.datasource;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.Days;
-import org.joda.time.Duration;
-
 import com.google.common.collect.Range;
 import com.linkedin.thirdeye.api.TimeGranularity;
 import com.linkedin.thirdeye.api.TimeRange;
-import org.joda.time.Hours;
+import com.linkedin.thirdeye.api.TimeUnit;
+import java.util.ArrayList;
+import java.util.List;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 
 /**
  * Not to be confused with {@link TimeRange}. This class handles splitting time windows into
@@ -103,17 +98,14 @@ public class TimeRangeUtils {
    * @return the bucket index of current time
    */
   public static int computeBucketIndex(TimeGranularity granularity, DateTime start, DateTime current) {
-    int index = -1;
-    switch (granularity.getUnit()) {
-    case DAYS:
-      Days d = Days.daysBetween(start, current);
-      index = d.getDays() / granularity.getSize();
-      break;
-    default:
-      long interval = granularity.toMillis();
-      index = (int) ((current.getMillis() - start.getMillis()) / interval);
+    long base = granularity.fromTimestamp(start);
+    long offset = granularity.fromTimestamp(current) - base;
+
+    if (offset > Integer.MAX_VALUE) {
+      throw new IllegalArgumentException(String.format("Bucket index %d is too large", offset));
     }
-    return index;
+
+    return (int) offset;
   }
 
   public static void main(String[] args) {

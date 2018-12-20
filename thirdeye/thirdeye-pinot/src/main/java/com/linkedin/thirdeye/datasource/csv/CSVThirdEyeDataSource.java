@@ -21,6 +21,7 @@ import com.google.common.collect.Collections2;
 import com.google.common.collect.Multimap;
 import com.linkedin.thirdeye.api.TimeGranularity;
 import com.linkedin.thirdeye.api.TimeSpec;
+import com.linkedin.thirdeye.api.TimeUnit;
 import com.linkedin.thirdeye.constant.MetricAggFunction;
 import com.linkedin.thirdeye.dataframe.DataFrame;
 import com.linkedin.thirdeye.dataframe.Grouping;
@@ -42,8 +43,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
+import org.joda.time.DateTimeZone;
 
 import static com.linkedin.thirdeye.dataframe.Series.SeriesType.*;
 
@@ -147,6 +148,8 @@ public class CSVThirdEyeDataSource implements ThirdEyeDataSource {
    */
   @Override
   public ThirdEyeResponse execute(final ThirdEyeRequest request) throws Exception {
+    // TODO handle non-UTC time zone gracefully
+
     DataFrame df = new DataFrame();
     for (MetricFunction function : request.getMetricFunctions()) {
       final String inputName = translator.translate(function.getMetricId());
@@ -215,8 +218,9 @@ public class CSVThirdEyeDataSource implements ThirdEyeDataSource {
                 return true;
               }
             }, groupByColumns);
+            // TODO support non-UTC timezone
             filteredData = filteredData.dropNull()
-                .groupByInterval(COL_TIMESTAMP, request.getGroupByTimeGranularity().toMillis())
+                .groupByPeriod(COL_TIMESTAMP, DateTimeZone.UTC, request.getGroupByTimeGranularity().toPeriod())
                 .aggregate(aggregationExps);
             if (df.size() == 0) {
               df = filteredData;
@@ -244,8 +248,8 @@ public class CSVThirdEyeDataSource implements ThirdEyeDataSource {
       } else {
         if (request.getGroupByTimeGranularity() != null) {
           // group by time granularity only
-          // TODO handle non-UTC time zone gracefully
-          df = data.groupByInterval(COL_TIMESTAMP, request.getGroupByTimeGranularity().toMillis())
+          // TODO support non-UTC timezone
+          df = data.groupByPeriod(COL_TIMESTAMP, DateTimeZone.UTC, request.getGroupByTimeGranularity().toPeriod())
               .aggregate(inputName + ":sum");
           df.renameSeries(inputName, outputName);
         } else {

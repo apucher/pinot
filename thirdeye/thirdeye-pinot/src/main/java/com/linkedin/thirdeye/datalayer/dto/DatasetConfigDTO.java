@@ -17,8 +17,8 @@
 package com.linkedin.thirdeye.datalayer.dto;
 
 import com.linkedin.thirdeye.api.TimeGranularity;
+import com.linkedin.thirdeye.api.TimeUnit;
 import com.linkedin.thirdeye.datalayer.pojo.DatasetConfigBean;
-import java.util.concurrent.TimeUnit;
 
 public class DatasetConfigDTO extends DatasetConfigBean {
 

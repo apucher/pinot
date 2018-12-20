@@ -386,7 +386,7 @@ public class PinotThirdEyeDataSource implements ThirdEyeDataSource {
                 int timeBucket;
                 long millis;
                 if (!isISOFormat) {
-                  millis = dataGranularity.toMillis(Double.valueOf(groupKeyVal).longValue());
+                  millis = dataGranularity.toTimestamp(Double.valueOf(groupKeyVal).longValue(), dateTimeZone);
                 } else {
                   millis = DateTime.parse(groupKeyVal, inputDataDateTimeFormatter).getMillis();
                 }

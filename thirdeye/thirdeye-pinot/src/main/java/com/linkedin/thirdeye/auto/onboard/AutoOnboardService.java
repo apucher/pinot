@@ -54,7 +54,7 @@ public class AutoOnboardService implements Runnable {
   }
 
   public void start() {
-    scheduledExecutorService.scheduleAtFixedRate(this, 0, runFrequency.getSize(), runFrequency.getUnit());
+    scheduledExecutorService.scheduleAtFixedRate(this, 0, runFrequency.getSize(), runFrequency.getUnit().toJavaUnit());
   }
 
   public void shutdown() {
