@@ -160,6 +160,13 @@ public class CSVThirdEyeDataSource implements ThirdEyeDataSource {
         throw new IllegalArgumentException(String.format("Aggregation function '%s' not supported yet.", aggFunction));
       }
 
+      // TODO track data set meta data in data source
+      DateTimeZone timeZone = DateTimeZone.UTC;
+      if (request.getStartTimeInclusive() != null &&
+          request.getStartTimeInclusive().getZone() != null) {
+        timeZone = request.getStartTimeInclusive().getZone();
+      }
+
       DataFrame data = dataSets.get(function.getDataset());
 
       // filter constraints
@@ -218,9 +225,8 @@ public class CSVThirdEyeDataSource implements ThirdEyeDataSource {
                 return true;
               }
             }, groupByColumns);
-            // TODO support non-UTC timezone
             filteredData = filteredData.dropNull()
-                .groupByPeriod(COL_TIMESTAMP, DateTimeZone.UTC, request.getGroupByTimeGranularity().toPeriod())
+                .groupByPeriod(COL_TIMESTAMP, timeZone, request.getGroupByTimeGranularity().toPeriod())
                 .aggregate(aggregationExps);
             if (df.size() == 0) {
               df = filteredData;
@@ -248,8 +254,7 @@ public class CSVThirdEyeDataSource implements ThirdEyeDataSource {
       } else {
         if (request.getGroupByTimeGranularity() != null) {
           // group by time granularity only
-          // TODO support non-UTC timezone
-          df = data.groupByPeriod(COL_TIMESTAMP, DateTimeZone.UTC, request.getGroupByTimeGranularity().toPeriod())
+          df = data.groupByPeriod(COL_TIMESTAMP, timeZone, request.getGroupByTimeGranularity().toPeriod())
               .aggregate(inputName + ":sum");
           df.renameSeries(inputName, outputName);
         } else {

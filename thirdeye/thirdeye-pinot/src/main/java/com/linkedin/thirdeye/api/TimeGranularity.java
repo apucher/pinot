@@ -145,12 +145,15 @@ public class TimeGranularity implements Comparable<TimeGranularity> {
    * @return
    */
   public long fromTimestamp(DateTime datetime) {
+    // TODO improve really poor perf
+    long counter = 0;
     Period period = this.toPeriod();
     DateTime origin = new DateTime(0, datetime.getZone());
     while(!origin.plus(period).isAfter(datetime)) {
       origin = origin.plus(period);
+      counter++;
     }
-    return origin.getMillis();
+    return counter;
   }
 
   /**

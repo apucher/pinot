@@ -1603,8 +1603,8 @@ public class DataFrame {
    *
    * @return DataFrameGrouping
    */
-  public Grouping.DataFrameGrouping groupByPeriod(String seriesName, DateTimeZone timezone, Period period) {
-    return new Grouping.DataFrameGrouping(Grouping.GROUP_KEY, this, Grouping.GroupingByPeriod.from(assertSeriesExists(seriesName).getLongs(), timezone, period));
+  public Grouping.DataFrameGrouping groupByPeriod(String timestamps, DateTimeZone timezone, Period period) {
+    return new Grouping.DataFrameGrouping(Grouping.GROUP_KEY, this, Grouping.GroupingByPeriod.from(assertSeriesExists(timestamps).getLongs(), timezone, period));
   }
 
   /**

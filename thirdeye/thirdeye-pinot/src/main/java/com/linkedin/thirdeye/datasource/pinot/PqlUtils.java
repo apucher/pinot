@@ -258,9 +258,9 @@ public class PqlUtils {
 
     // epoch case
     if (timeFormat == null || TimeSpec.SINCE_EPOCH_FORMAT.equals(timeFormat)) {
-      Period roundingPeriod = dataGranularity.toPeriod().minusMillis(1);
-      long startUnits = dataGranularity.fromTimestamp(start.plus(roundingPeriod));
-      long endUnits = dataGranularity.fromTimestamp(endExclusive.plus(roundingPeriod));
+      Period roundingPeriod = dataGranularity.toPeriod();
+      long startUnits = dataGranularity.fromTimestamp(start.plus(roundingPeriod).minusMillis(1));
+      long endUnits = dataGranularity.fromTimestamp(endExclusive.plus(roundingPeriod).minusMillis(1));
 
       // point query
       if (startUnits == endUnits) {
